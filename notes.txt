@@ -1,0 +1,53 @@
+gc-backend
+       - node_modules
+       - prisma
+       - .env
+       - .gitignore
+       - package-lock.json
+       - package.json
+
+node_modules
+
+public
+       - favicon.ico
+       - placeholder.svg
+       - robots.txt
+
+src
+       - components/
+              - ui/
+              - Dashboard.tsx
+              - Login.tsx
+              - RegistroEncontro.tsx
+              - RegistroMembro.tsx
+              - RegistroUser
+       - hooks/
+              - use-mobile.tsx
+              - use-toast.ts
+       - lib/
+              - utils.ts
+       - pages/
+              - Index.tsx
+              - Notfound
+              - RegistroUser
+       - App.css
+       - App.tsx
+       - index.css
+       - main.tsx
+       - vite-env.d.ts
+.gitignore
+bun.lockb
+components.json
+eslint.config.json
+index.html
+package-lock.json
+package.json
+postcss.config.json
+README.md
+tailwind.config.ts
+tsconfig.app.json
+tsconfig.json
+tsconfig.node.json
+vite.config.ts
+
+aqui eu fingo que to programando algo mas na vdd nao estou escrvendo nada
