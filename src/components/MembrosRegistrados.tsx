@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, ArrowLeft } from "lucide-react";
+import React, { useState } from "react";
 
 interface Member {
   id: string;
@@ -21,7 +22,36 @@ const mockMembers: Member[] = [
   // ...adicione mais membros conforme necessário
 ];
 
+// Modal de detalhes do membro
+const MemberDetailsModal: React.FC<{
+  member: Member | null;
+  onClose: () => void;
+}> = ({ member, onClose }) => {
+  if (!member) return null;
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg relative">
+        <button
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
+          onClick={onClose}
+        >
+          ×
+        </button>
+        <h2 className="text-xl font-bold mb-2">{member.nome}</h2>
+        <p><strong>Email:</strong> {member.email}</p>
+        <p><strong>Grupo:</strong> {member.grupo}</p>
+        <p><strong>Status:</strong> {member.status}</p>
+        <Button variant="destructive" className="mt-4 w-full">
+          Inativar Membro
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export const MembrosRegistrados: React.FC<MembrosRegistradosProps> = ({ onBack }) => {
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-gradient-primary border-b">
@@ -61,7 +91,11 @@ export const MembrosRegistrados: React.FC<MembrosRegistradosProps> = ({ onBack }
                 <div className="mb-2">
                   <span className="font-semibold">Status:</span> {member.status}
                 </div>
-                <Button variant="outline" className="w-full mt-2">
+                <Button
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={() => setSelectedMember(member)}
+                >
                   Visualizar Detalhes
                 </Button>
               </CardContent>
@@ -69,6 +103,10 @@ export const MembrosRegistrados: React.FC<MembrosRegistradosProps> = ({ onBack }
           ))}
         </div>
       </div>
+      <MemberDetailsModal
+        member={selectedMember}
+        onClose={() => setSelectedMember(null)}
+      />
     </div>
   );
 }
