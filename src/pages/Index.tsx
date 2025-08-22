@@ -3,8 +3,8 @@ import { Login } from "@/components/Login";
 import { Dashboard } from "@/components/Dashboard";
 import { RegistroEncontro } from "@/components/RegistroEncontro";
 import { RegistroMembro } from "@/components/RegistroMembro";
-import { MembrosRegistrados } from "@/components/MembrosRegistrados"
-
+import { MembrosRegistrados } from "@/components/MembrosRegistrados";
+import { MeusRelatorios } from "@/components/MeusRelatorios";
 
 const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -42,6 +42,8 @@ const Index = () => {
       return <RegistroMembro onBack={handleBack} />;
     case "membro-registrado":
       return <MembrosRegistrados onBack={handleBack} />;
+    case "meus-relatorios":
+      return <MeusRelatorios onBack={handleBack} />;
     default:
       return (
         <Dashboard 

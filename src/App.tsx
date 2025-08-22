@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { RegistroUser } from "@/components/RegistroUser";
+import { MeusRelatorios } from "@/components/MeusRelatorios"
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/registro" element={<RegistroUser onRegister={handleRegister} />} />
+      <Route path="/meus-relatorios" element={<MeusRelatorios onBack={() => navigate("/")} />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

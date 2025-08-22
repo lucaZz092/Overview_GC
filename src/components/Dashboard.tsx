@@ -51,7 +51,7 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
     }
   ];
 
-  // Estatísticas específicas para líderes (apenas seus grupos)
+  // Estatísticas específicas para líderes e pastores
   const liderStats = [
     {
       title: "Meus Grupos",
@@ -229,9 +229,13 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
               </Card>
             </div>
           </div>
+          
         ) : userType === "lider" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card">
+            <Card
+              className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+              onClick={() => onNavigate("meus-relatorios")}
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Eye className="h-5 w-5 text-primary" />
