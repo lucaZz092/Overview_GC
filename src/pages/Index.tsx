@@ -5,20 +5,20 @@ import { RegistroEncontro } from "@/components/RegistroEncontro";
 import { RegistroMembro } from "@/components/RegistroMembro";
 import { MembrosRegistrados } from "@/components/MembrosRegistrados";
 import { MeusRelatorios } from "@/components/MeusRelatorios";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 const Index = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, loading, signOut } = useAuthContext();
   const [userType, setUserType] = useState("");
   const [currentPage, setCurrentPage] = useState("dashboard");
 
   const handleLogin = (type: string) => {
-    setIsLoggedIn(true);
     setUserType(type);
     setCurrentPage("dashboard");
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
+    await signOut();
     setUserType("");
     setCurrentPage("dashboard");
   };
@@ -31,7 +31,20 @@ const Index = () => {
     setCurrentPage("dashboard");
   };
 
-  if (!isLoggedIn) {
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated
+  if (!user) {
     return <Login onLogin={handleLogin} />;
   }
 

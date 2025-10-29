@@ -1,7 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, TrendingUp, MapPin, Plus, Eye } from "lucide-react";
+import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut } from "lucide-react";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface DashboardProps {
   userType: string;
@@ -10,16 +12,36 @@ interface DashboardProps {
 }
 
 export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
+  const { user } = useAuthContext();
+  const { profile, loading, isAdmin, isLeader } = useUserProfile();
+
   const getWelcomeMessage = () => {
-    switch (userType) {
-      case "co-lider":
-        return "Área do Co-líder";
-      case "lider":
+    if (loading) return "Dashboard";
+    
+    switch (profile?.role) {
+      case "admin":
+        return "Área Administrativa";
+      case "leader":
         return "Área do Líder";
-      case "pastor":
-        return "Área Pastoral";
+      case "member":
+        return "Área do Membro";
       default:
         return "Dashboard";
+    }
+  };
+
+  const getUserBadge = () => {
+    if (loading) return null;
+    
+    switch (profile?.role) {
+      case "admin":
+        return <Badge variant="destructive">Administrador</Badge>;
+      case "leader":
+        return <Badge variant="default">Líder</Badge>;
+      case "member":
+        return <Badge variant="secondary">Membro</Badge>;
+      default:
+        return <Badge variant="outline">Usuário</Badge>;
     }
   };
 
@@ -103,16 +125,19 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
           <div>
             <h1 className="text-2xl font-bold text-white">Overview - GC</h1>
             <p className="text-white/80">{getWelcomeMessage()}</p>
+            {profile && (
+              <p className="text-white/60 text-sm">Bem-vindo, {profile.name}</p>
+            )}
           </div>
           <div className="flex items-center gap-4">
-            <Badge variant="secondary" className="text-primary">
-              {userType.charAt(0).toUpperCase() + userType.slice(1)}
-            </Badge>
+            {getUserBadge()}
+            <span className="text-white/80 text-sm">{user?.email}</span>
             <Button 
               variant="outline" 
               onClick={onLogout}
-              className="border-white/20 text-black hover:bg-white/10"
+              className="border-white/20 text-white hover:bg-white/10"
             >
+              <LogOut className="w-4 h-4 mr-2" />
               Sair
             </Button>
           </div>

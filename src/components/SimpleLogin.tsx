@@ -3,60 +3,43 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-
 
 interface LoginProps {
   onLogin: (userType: string) => void;
 }
 
-export function Login({ onLogin }: LoginProps) {
+export function SimpleLogin({ onLogin }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [userType, setUserType] = useState("");
   const navigate = useNavigate();
-  const { signIn } = useAuth();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
+    if (!email || !password || !userType) {
       toast({
         title: "Erro",
-        description: "Preencha email e senha",
+        description: "Preencha todos os campos",
         variant: "destructive",
       });
       return;
     }
 
-    setLoading(true);
+    // Simulação de login (sem Supabase por enquanto)
+    toast({
+      title: "Login realizado!",
+      description: `Bem-vindo, ${userType}!`,
+    });
     
-    try {
-      const { user } = await signIn(email, password);
-      
-      toast({
-        title: "Login realizado!",
-        description: `Bem-vindo, ${user?.email}!`,
-      });
-      
-      // Determinar tipo de usuário baseado no email ou role
-      const userType = email === 'admin@gcoverview.com' ? 'admin' : 'member';
-      onLogin(userType);
-    } catch (error: any) {
-      toast({
-        title: "Erro no login",
-        description: error.message || "Credenciais inválidas",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    onLogin(userType);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">
@@ -67,7 +50,7 @@ export function Login({ onLogin }: LoginProps) {
           </p>
         </div>
 
-        <Card className="shadow-strong border-0 bg-white/95 backdrop-blur-sm">
+        <Card className="shadow-lg border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Entrar</CardTitle>
             <CardDescription>
@@ -98,22 +81,34 @@ export function Login({ onLogin }: LoginProps) {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="userType">Tipo de Usuário</Label>
+                <Select value={userType} onValueChange={setUserType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione seu perfil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="co-lider">Co-líder</SelectItem>
+                    <SelectItem value="lider">Líder</SelectItem>
+                    <SelectItem value="pastor">Pastor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex gap-2">
-                  <Button 
-                    type="submit" 
-                    className="flex-1 bg-gradient-primary ..." 
-                    disabled={loading}
-                  >
-                    {loading ? "Entrando..." : "Entrar"}
-                  </Button>
-                  <Button 
-                    type="button"
-                    onClick={() => navigate("/registro")} 
-                    className="flex-1 bg-gradient-primary ..."
-                    disabled={loading}
-                  >
-                    Registrar
-                  </Button>
+                <Button 
+                  type="submit" 
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  Entrar
+                </Button>
+                <Button 
+                  type="button"
+                  onClick={() => navigate("/registro")} 
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                >
+                  Registrar
+                </Button>
               </div>
             </form>
           </CardContent>
