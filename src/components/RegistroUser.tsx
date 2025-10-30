@@ -311,7 +311,23 @@ export function RegistroUser({ onRegister }: RegistroProps) {
                   placeholder="Digite sua melhor senha"
                 />
               </div>
-              
+
+              {!code && (
+                <div className="space-y-2">
+                  <Label htmlFor="userType">Tipo de Usuário</Label>
+                  <Select value={userType} onValueChange={setUserType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione seu perfil" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="co_leader">Co-líder</SelectItem>
+                      <SelectItem value="leader">Líder</SelectItem>
+                      <SelectItem value="pastor">Pastor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               {/* Campo de GC só aparece para co-líderes e líderes */}
               {((code && codeInfo && (codeInfo.role === 'co_leader' || codeInfo.role === 'leader')) || 
                 (!code && (userType === 'co_leader' || userType === 'leader'))) && (
@@ -333,25 +349,14 @@ export function RegistroUser({ onRegister }: RegistroProps) {
                       <SelectItem value="gc-legacy-chosen">GC Legacy Chosen</SelectItem>
                       <SelectItem value="gc-legacy-overflow">GC Legacy Overflow</SelectItem>
                       <SelectItem value="gc-legacy-rise">GC Legacy Rise</SelectItem>
-                      <SelectItem value="gc-legacy-renew">GC Legacy Renew</SelectItem>
-                      <SelectItem value="gc-legacy-trinity">GC Legacy Trinity</SelectItem>
-                      <SelectItem value="gc-legacy-arrow">GC Legacy Arrow</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {!code && (
-                <div className="space-y-2">
-                  <Label htmlFor="userType">Tipo de Usuário</Label>
-                  <Select value={userType} onValueChange={setUserType}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione seu perfil" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="co_leader">Co-líder</SelectItem>
-                      <SelectItem value="leader">Líder</SelectItem>
-                      <SelectItem value="pastor">Pastor</SelectItem>
+                      <SelectItem value="gc-vila-nova">GC Vila Nova</SelectItem>
+                      <SelectItem value="gc-centro">GC Centro</SelectItem>
+                      <SelectItem value="gc-norte">GC Norte</SelectItem>
+                      <SelectItem value="gc-sul">GC Sul</SelectItem>
+                      <SelectItem value="gc-leste">GC Leste</SelectItem>
+                      <SelectItem value="gc-oeste">GC Oeste</SelectItem>
+                      <SelectItem value="gc-juventude">GC Juventude</SelectItem>
+                      <SelectItem value="gc-casais">GC Casais</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
