@@ -5,19 +5,32 @@ import { RegistroEncontro } from "@/components/RegistroEncontro";
 import { RegistroMembro } from "@/components/RegistroMembro";
 import { MembrosRegistrados } from "@/components/MembrosRegistrados";
 import { MeusRelatorios } from "@/components/MeusRelatorios";
+import { ConnectionTest } from "@/components/ConnectionTest";
+import { InvitationManager } from "@/components/InvitationManager";
 import { useAuthContext } from "@/contexts/AuthContext";
 
 const Index = () => {
   const { user, loading, signOut } = useAuthContext();
   const [userType, setUserType] = useState("");
   const [currentPage, setCurrentPage] = useState("dashboard");
+  const [showConnectionTest, setShowConnectionTest] = useState(false);
 
   const handleLogin = (type: string) => {
+    console.log('🎯 Index.tsx - handleLogin chamado com tipo:', type);
     setUserType(type);
     setCurrentPage("dashboard");
+    console.log('✅ Index.tsx - userType setado para:', type);
+  };
+
+  const handleRoleSelect = (role: string) => {
+    console.log('🎭 Index.tsx - handleRoleSelect chamado com papel:', role);
+    setUserType(role);
+    console.log('✅ Index.tsx - userType atualizado para:', role);
   };
 
   const handleLogout = async () => {
+    // Limpar qualquer papel de admin salvo
+    window.sessionStorage.removeItem('adminRole');
     await signOut();
     setUserType("");
     setCurrentPage("dashboard");
@@ -43,9 +56,26 @@ const Index = () => {
     );
   }
 
+  // Mostrar teste de conexão se solicitado
+  if (showConnectionTest) {
+    return <ConnectionTest />;
+  }
+
   // Not authenticated
   if (!user) {
-    return <Login onLogin={handleLogin} />;
+    return (
+      <div>
+        <div className="fixed top-4 right-4 z-50">
+          <button 
+            onClick={() => setShowConnectionTest(true)}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-red-700 transition-colors text-sm"
+          >
+            🔧 Teste Conexão
+          </button>
+        </div>
+        <Login onLogin={handleLogin} />
+      </div>
+    );
   }
 
   switch (currentPage) {
@@ -57,12 +87,15 @@ const Index = () => {
       return <MembrosRegistrados onBack={handleBack} />;
     case "meus-relatorios":
       return <MeusRelatorios onBack={handleBack} />;
+    case "invitation-codes":
+      return <InvitationManager onBack={handleBack} />;
     default:
       return (
         <Dashboard 
           userType={userType} 
           onNavigate={handleNavigate} 
-          onLogout={handleLogout} 
+          onLogout={handleLogout}
+          onRoleSelect={handleRoleSelect}
         />
       );
   }

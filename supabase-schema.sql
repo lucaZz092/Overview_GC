@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     email TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
-    role TEXT DEFAULT 'member' CHECK (role IN ('admin', 'leader', 'member')),
+    role TEXT DEFAULT 'co_leader' CHECK (role IN ('admin', 'pastor', 'leader', 'co_leader')),
     is_active BOOLEAN DEFAULT true
 );
 
@@ -86,15 +86,19 @@ END;
 $$ language 'plpgsql';
 
 -- Triggers para atualizar automaticamente o campo updated_at
+DROP TRIGGER IF EXISTS update_users_updated_at ON public.users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON public.users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_members_updated_at ON public.members;
 CREATE TRIGGER update_members_updated_at BEFORE UPDATE ON public.members
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_meetings_updated_at ON public.meetings;
 CREATE TRIGGER update_meetings_updated_at BEFORE UPDATE ON public.meetings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_reports_updated_at ON public.reports;
 CREATE TRIGGER update_reports_updated_at BEFORE UPDATE ON public.reports
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -115,9 +119,28 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_meeting_attendance_count_trigger ON public.meeting_attendances;
 CREATE TRIGGER update_meeting_attendance_count_trigger
     AFTER INSERT OR UPDATE OR DELETE ON public.meeting_attendances
     FOR EACH ROW EXECUTE FUNCTION update_meeting_attendance_count();
+
+-- Limpar políticas existentes se houver
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.users;
+DROP POLICY IF EXISTS "Authenticated users can view members" ON public.members;
+DROP POLICY IF EXISTS "Authenticated users can insert members" ON public.members;
+DROP POLICY IF EXISTS "Users can update members they created" ON public.members;
+DROP POLICY IF EXISTS "Users can delete members they created" ON public.members;
+DROP POLICY IF EXISTS "Authenticated users can view meetings" ON public.meetings;
+DROP POLICY IF EXISTS "Authenticated users can insert meetings" ON public.meetings;
+DROP POLICY IF EXISTS "Users can update meetings they created" ON public.meetings;
+DROP POLICY IF EXISTS "Users can delete meetings they created" ON public.meetings;
+DROP POLICY IF EXISTS "Authenticated users can view attendances" ON public.meeting_attendances;
+DROP POLICY IF EXISTS "Authenticated users can manage attendances" ON public.meeting_attendances;
+DROP POLICY IF EXISTS "Authenticated users can view reports" ON public.reports;
+DROP POLICY IF EXISTS "Authenticated users can insert reports" ON public.reports;
+DROP POLICY IF EXISTS "Users can update reports they created" ON public.reports;
+DROP POLICY IF EXISTS "Users can delete reports they created" ON public.reports;
 
 -- Políticas de RLS (Row Level Security)
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
@@ -142,12 +165,12 @@ CREATE POLICY "Authenticated users can insert members" ON public.members
 
 CREATE POLICY "Users can update members they created" ON public.members
     FOR UPDATE USING (user_id = auth.uid() OR EXISTS (
-        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'leader')
+        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'pastor', 'leader')
     ));
 
 CREATE POLICY "Users can delete members they created" ON public.members
     FOR DELETE USING (user_id = auth.uid() OR EXISTS (
-        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'leader')
+        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'pastor', 'leader')
     ));
 
 -- Políticas para meetings
@@ -159,12 +182,12 @@ CREATE POLICY "Authenticated users can insert meetings" ON public.meetings
 
 CREATE POLICY "Users can update meetings they created" ON public.meetings
     FOR UPDATE USING (user_id = auth.uid() OR EXISTS (
-        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'leader')
+        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'pastor', 'leader')
     ));
 
 CREATE POLICY "Users can delete meetings they created" ON public.meetings
     FOR DELETE USING (user_id = auth.uid() OR EXISTS (
-        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'leader')
+        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'pastor', 'leader')
     ));
 
 -- Políticas para meeting_attendances
@@ -183,12 +206,12 @@ CREATE POLICY "Authenticated users can insert reports" ON public.reports
 
 CREATE POLICY "Users can update reports they created" ON public.reports
     FOR UPDATE USING (user_id = auth.uid() OR EXISTS (
-        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'leader')
+        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'pastor', 'leader')
     ));
 
 CREATE POLICY "Users can delete reports they created" ON public.reports
     FOR DELETE USING (user_id = auth.uid() OR EXISTS (
-        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'leader')
+        SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'pastor', 'leader')
     ));
 
 -- Função para criar perfil de usuário automaticamente quando um novo usuário se registra
@@ -202,6 +225,7 @@ END;
 $$ language 'plpgsql' SECURITY DEFINER;
 
 -- Trigger para criar perfil automaticamente
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();

@@ -6,7 +6,7 @@ export interface UserProfile {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'leader' | 'member';
+  role: 'admin' | 'pastor' | 'leader' | 'co_leader';
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -53,15 +53,17 @@ export const useUserProfile = () => {
   }, [user]);
 
   const isAdmin = profile?.role === 'admin';
-  const isLeader = profile?.role === 'leader' || isAdmin;
-  const isMember = profile?.role === 'member' || isLeader;
+  const isPastor = profile?.role === 'pastor' || isAdmin;
+  const isLeader = profile?.role === 'leader' || isPastor;
+  const isCoLeader = profile?.role === 'co_leader' || isLeader;
 
   return {
     profile,
     loading,
     error,
     isAdmin,
+    isPastor,
     isLeader,
-    isMember,
+    isCoLeader,
   };
 };

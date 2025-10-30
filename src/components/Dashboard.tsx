@@ -1,30 +1,164 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut } from "lucide-react";
+import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut, Link } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { LinkGenerator } from "@/components/LinkGenerator";
 
 interface DashboardProps {
   userType: string;
   onNavigate: (page: string) => void;
   onLogout: () => void;
+  onRoleSelect?: (role: string) => void;
 }
 
-export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
+export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: DashboardProps) {
+  const [showLinkGenerator, setShowLinkGenerator] = useState(false);
   const { user } = useAuthContext();
-  const { profile, loading, isAdmin, isLeader } = useUserProfile();
+  const { profile, loading, isAdmin, isPastor, isLeader } = useUserProfile();
+
+  // Usar o userType escolhido pelo admin, ou o role do perfil se não for admin
+  const effectiveRole = (profile?.role === 'admin' && userType) ? userType : profile?.role;
+
+  // Debug para entender o que está acontecendo
+  console.log('🔍 Dashboard Debug:');
+  console.log('  User Email:', user?.email);
+  console.log('  UserType:', userType);
+  console.log('  Profile Role:', profile?.role);
+  console.log('  Loading:', loading);
+  console.log('  Effective Role:', effectiveRole);
+  console.log('  Full Profile:', profile);
+
+  // Se ainda estiver carregando e não tiver dados, mostrar loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Carregando Dashboard...</p>
+          <p className="text-sm mt-2">User: {user?.email}</p>
+          <p className="text-sm">UserType: {userType}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se é admin mas não escolheu papel nesta sessão, mostrar seleção
+  if (profile?.role === 'admin' && !userType) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-2">
+             👑 Área Administrativa
+            </h1>
+            <p className="text-white/80">
+              Escolha o papel para esta sessão
+            </p>
+          </div>
+
+          <Card className="shadow-strong border-0 bg-white/95 backdrop-blur-sm">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl text-green-700">
+                👋 Bem-vindo, Administrador!
+              </CardTitle>
+              <CardDescription>
+                Como você deseja acessar o sistema hoje?
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <Button 
+                  onClick={() => {
+                    console.log('🎭 Admin escolheu: pastor');
+                    onRoleSelect?.('pastor');
+                  }}
+                  className="w-full bg-gradient-primary text-lg py-6"
+                >
+                  🙏 Pastor
+                </Button>
+                
+                <Button 
+                  onClick={() => {
+                    console.log('🎭 Admin escolheu: leader');
+                    onRoleSelect?.('leader');
+                  }}
+                  className="w-full bg-gradient-primary text-lg py-6"
+                  variant="outline"
+                >
+                  👑 Líder
+                </Button>
+                
+                <Button 
+                  onClick={() => {
+                    console.log('🎭 Admin escolheu: co_leader');
+                    onRoleSelect?.('co_leader');
+                  }}
+                  className="w-full bg-gradient-primary text-lg py-6"
+                  variant="outline"
+                >
+                  🤝 Co-Líder
+                </Button>
+              </div>
+
+              <div className="pt-4 border-t">
+                <Button 
+                  onClick={onLogout}
+                  variant="ghost"
+                  className="w-full"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sair
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Se não tiver perfil, mostrar erro
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-600 to-purple-700 flex items-center justify-center">
+        <div className="text-white text-center p-8">
+          <h2 className="text-2xl font-bold mb-4">⚠️ Perfil não encontrado</h2>
+          <p className="mb-4">Não foi possível carregar seu perfil do banco de dados.</p>
+          <p className="text-sm mb-2">User: {user?.email}</p>
+          <p className="text-sm mb-4">UserType: {userType}</p>
+          <div className="bg-white/10 p-4 rounded-lg text-left">
+            <p className="font-bold mb-2">Possíveis causas:</p>
+            <p>• Schema do banco não foi executado</p>
+            <p>• Usuário não existe na tabela public.users</p>
+            <p>• Problema de conexão com Supabase</p>
+          </div>
+          <Button 
+            onClick={onLogout}
+            className="mt-4"
+            variant="outline"
+          >
+            Fazer logout e tentar novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const getWelcomeMessage = () => {
     if (loading) return "Dashboard";
     
-    switch (profile?.role) {
+    switch (effectiveRole) {
       case "admin":
         return "Área Administrativa";
+      case "pastor":
+        return "Área do Pastor";
       case "leader":
         return "Área do Líder";
-      case "member":
-        return "Área do Membro";
+      case "co_leader":
+        return "Área do Co-Líder";
       default:
         return "Dashboard";
     }
@@ -33,13 +167,33 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
   const getUserBadge = () => {
     if (loading) return null;
     
-    switch (profile?.role) {
+    const roleToShow = effectiveRole;
+    const isActingAsAdmin = profile?.role === 'admin';
+    
+    switch (roleToShow) {
       case "admin":
         return <Badge variant="destructive">Administrador</Badge>;
+      case "pastor":
+        return (
+          <div className="flex gap-2">
+            <Badge variant="destructive">Pastor</Badge>
+            {isActingAsAdmin && <Badge variant="outline" className="text-xs">Admin</Badge>}
+          </div>
+        );
       case "leader":
-        return <Badge variant="default">Líder</Badge>;
-      case "member":
-        return <Badge variant="secondary">Membro</Badge>;
+        return (
+          <div className="flex gap-2">
+            <Badge variant="default">Líder</Badge>
+            {isActingAsAdmin && <Badge variant="outline" className="text-xs">Admin</Badge>}
+          </div>
+        );
+      case "co_leader":
+        return (
+          <div className="flex gap-2">
+            <Badge variant="secondary">Co-Líder</Badge>
+            {isActingAsAdmin && <Badge variant="outline" className="text-xs">Admin</Badge>}
+          </div>
+        );
       default:
         return <Badge variant="outline">Usuário</Badge>;
     }
@@ -117,6 +271,11 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
     }
   ];
 
+  // Se deve mostrar o gerador de links
+  if (showLinkGenerator) {
+    return <LinkGenerator onBack={() => setShowLinkGenerator(false)} />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -146,7 +305,7 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats Grid - Específico para cada tipo de usuário */}
-        {userType === "co-lider" ? (
+        {effectiveRole === "co_leader" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {coLiderStats.map((stat, index) => (
               <Card key={index} className="shadow-soft hover:shadow-strong transition-all duration-200">
@@ -165,7 +324,7 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
               </Card>
             ))}
           </div>
-        ) : userType === "lider" ? (
+        ) : effectiveRole === "leader" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {liderStats.map((stat, index) => (
               <Card key={index} className="shadow-soft hover:shadow-strong transition-all duration-200">
@@ -184,7 +343,7 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
               </Card>
             ))}
           </div>
-        ) : userType === "pastor" ? (
+        ) : effectiveRole === "pastor" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {pastorStats.map((stat, index) => (
               <Card key={index} className="shadow-soft hover:shadow-strong transition-all duration-200">
@@ -206,7 +365,7 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
         ) : null}
 
         {/* Action Cards - Interface simplificada para co-líderes */}
-        {userType === "co-lider" ? (
+        {effectiveRole === "co_leader" ? (
           <div className="space-y-6">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-semibold mb-2">Suas Funcionalidades</h2>
@@ -255,7 +414,7 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
             </div>
           </div>
           
-        ) : userType === "lider" ? (
+        ) : effectiveRole === "leader" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card
               className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
@@ -296,7 +455,7 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
               </CardHeader>
             </Card>
           </div>
-        ) : userType === "pastor" ? (
+        ) : effectiveRole === "pastor" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card">
               <CardHeader>
@@ -333,11 +492,26 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
                 </CardDescription>
               </CardHeader>
             </Card>
+
+            <Card 
+              className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+              onClick={() => setShowLinkGenerator(true)}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Link className="h-5 w-5 text-primary" />
+                  Links de Convite
+                </CardTitle>
+                <CardDescription>
+                  Gere links temporários para novos usuários
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </div>
         ) : null}
 
         {/* Recent Activity - Filtrada por tipo de usuário */}
-        {userType === "pastor" && (
+        {effectiveRole === "pastor" && (
           <Card className="mt-8 shadow-soft">
             <CardHeader>
               <CardTitle>Atividade Recente - Todos os Grupos</CardTitle>
@@ -373,7 +547,7 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
           </Card>
         )}
 
-        {userType === "lider" && (
+        {effectiveRole === "leader" && (
           <Card className="mt-8 shadow-soft">
             <CardHeader>
               <CardTitle>Atividade dos Seus Grupos</CardTitle>
@@ -410,7 +584,7 @@ export function Dashboard({ userType, onNavigate, onLogout }: DashboardProps) {
         )}
 
         {/* Mensagem motivacional para co-líderes */}
-        {userType === "co-lider" && (
+        {effectiveRole === "co_leader" && (
           <Card className="mt-8 shadow-soft bg-gradient-card">
             <CardContent className="pt-6">
               <div className="text-center">

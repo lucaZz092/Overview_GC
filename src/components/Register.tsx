@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 
 interface RegisterProps {
   onRegister: () => void;
@@ -16,9 +17,19 @@ export function Register({ onRegister }: RegisterProps) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [invitationCode, setInvitationCode] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { signUp } = useAuth();
+
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case 'pastor': return 'Pastor';
+      case 'leader': return 'Líder';
+      case 'co_leader': return 'Co-Líder';
+      default: return role;
+    }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,12 +64,47 @@ export function Register({ onRegister }: RegisterProps) {
     setLoading(true);
     
     try {
-      await signUp(email, password, { name });
+      // Criar conta
+      const { user } = await signUp(email, password, { name });
       
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Verifique seu email para confirmar a conta",
-      });
+      // Se tem código de convite, tentar usar
+      if (invitationCode.trim() && user) {
+        try {
+          const { data, error } = await supabase.rpc('use_invitation_code', {
+            p_code: invitationCode.toUpperCase(),
+            p_user_id: user.id
+          });
+
+          if (error) throw error;
+
+          const result = data as { success: boolean; error?: string; role?: string };
+          
+          if (result.success) {
+            toast({
+              title: "Conta criada com sucesso!",
+              description: `Papel de ${getRoleDisplayName(result.role || '')} aplicado! Verifique seu email para confirmar a conta.`,
+            });
+          } else {
+            toast({
+              title: "Conta criada, mas código inválido",
+              description: `${result.error}. Você foi registrado como Co-Líder. Verifique seu email para confirmar a conta.`,
+              variant: "destructive",
+            });
+          }
+        } catch (codeError: any) {
+          console.error('Erro ao usar código:', codeError);
+          toast({
+            title: "Conta criada, mas código inválido",
+            description: "Você foi registrado como Co-Líder. Verifique seu email para confirmar a conta.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Conta criada com sucesso!",
+          description: "Você foi registrado como Co-Líder. Verifique seu email para confirmar a conta.",
+        });
+      }
       
       onRegister();
     } catch (error: any) {
@@ -135,6 +181,21 @@ export function Register({ onRegister }: RegisterProps) {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Digite a senha novamente"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="invitationCode">Código de Convite (opcional)</Label>
+                <Input
+                  id="invitationCode"
+                  type="text"
+                  value={invitationCode}
+                  onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
+                  placeholder="Ex: LIDER-2024"
+                />
+                <p className="text-xs text-gray-500">
+                  Se você tem um código de convite, digite aqui para ter um papel específico. 
+                  Caso contrário, será registrado como Co-Líder.
+                </p>
               </div>
 
               <div className="flex gap-2">
