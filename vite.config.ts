@@ -7,8 +7,7 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
-    allowedHosts: ['eb26b9d1771c.ngrok-free.app'], // pode deixar apenas isso ou trocar por 'all'
-    // allowedHosts: 'all',
+    allowedHosts: ['eb26b9d1771c.ngrok-free.app'],
   },
   plugins: [
     react()
@@ -19,18 +18,27 @@ export default defineConfig({
     },
   },
   build: {
+    target: 'esnext',
+    outDir: 'dist',
+    sourcemap: false,
     rollupOptions: {
+      external: [],
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          supabase: ['@supabase/supabase-js']
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('@supabase')) {
+              return 'supabase';
+            }
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react-vendor';
+            }
+            return 'vendor';
+          }
         }
       }
-    },
-    target: 'es2015',
-    outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: false,
-    minify: 'esbuild'
+    }
   },
+  optimizeDeps: {
+    include: ['@supabase/supabase-js', 'react', 'react-dom']
+  }
 });
