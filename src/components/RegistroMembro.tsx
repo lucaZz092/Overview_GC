@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users, ArrowLeft, Phone, Mail, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface RegistroMembroProps {
   onBack: () => void;
@@ -23,8 +25,10 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
     estadoCivil: "",
     observacoes: ""
   });
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuthContext();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.nome || !formData.telefone || !formData.grupo) {
@@ -36,22 +40,77 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
       return;
     }
 
-    toast({
-      title: "Membro cadastrado!",
-      description: "O membro foi adicionado com sucesso.",
-    });
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para cadastrar um membro",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Reset form
-    setFormData({
-      nome: "",
-      email: "",
-      telefone: "",
-      endereco: "",
-      grupo: "",
-      dataNascimento: "",
-      estadoCivil: "",
-      observacoes: ""
-    });
+    setLoading(true);
+
+    try {
+      // Preparar os dados do membro para inserção
+      const memberData = {
+        name: formData.nome,
+        email: formData.email || null,
+        phone: formData.telefone,
+        birth_date: formData.dataNascimento || null,
+        address: formData.endereco || null,
+        joined_date: new Date().toISOString().split('T')[0], // Data atual
+        notes: `Grupo: ${formData.grupo}${formData.estadoCivil ? `, Estado Civil: ${formData.estadoCivil}` : ''}${formData.observacoes ? `, Observações: ${formData.observacoes}` : ''}`,
+        user_id: user.id,
+        is_active: true
+      };
+
+      console.log('🔍 Dados do membro a serem inseridos:', memberData);
+
+      const { data, error } = await supabase
+        .from('members')
+        .insert([memberData])
+        .select();
+
+      if (error) {
+        console.error('❌ Erro ao cadastrar membro:', error);
+        toast({
+          title: "Erro ao cadastrar",
+          description: `Falha ao salvar membro: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('✅ Membro cadastrado com sucesso:', data);
+
+      toast({
+        title: "Membro cadastrado!",
+        description: `${formData.nome} foi adicionado com sucesso ao ${formData.grupo}.`,
+      });
+
+      // Reset form
+      setFormData({
+        nome: "",
+        email: "",
+        telefone: "",
+        endereco: "",
+        grupo: "",
+        dataNascimento: "",
+        estadoCivil: "",
+        observacoes: ""
+      });
+
+    } catch (error) {
+      console.error('❌ Erro inesperado:', error);
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um problema ao cadastrar o membro",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -213,8 +272,9 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
                   <Button 
                     type="submit" 
                     className="flex-1 bg-gradient-primary hover:scale-105 transition-all duration-200 shadow-soft"
+                    disabled={loading}
                   >
-                    Cadastrar Membro
+                    {loading ? "Cadastrando..." : "Cadastrar Membro"}
                   </Button>
                 </div>
               </form>
