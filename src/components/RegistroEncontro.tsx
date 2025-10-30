@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, ArrowLeft, Users, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface RegistroEncontroProps {
   onBack: () => void;
@@ -22,8 +24,10 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
     presentes: "",
     observacoes: ""
   });
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuthContext();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.data || !formData.horario || !formData.local || !formData.lider) {
@@ -35,21 +39,69 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
       return;
     }
 
-    toast({
-      title: "Encontro registrado!",
-      description: "O encontro foi salvo com sucesso.",
-    });
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para registrar um encontro",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Reset form
-    setFormData({
-      data: "",
-      horario: "",
-      local: "",
-      lider: "",
-      tema: "",
-      presentes: "",
-      observacoes: ""
-    });
+    setLoading(true);
+
+    try {
+      // Criar o timestamp combinando data e horário
+      const dateTime = new Date(`${formData.data}T${formData.horario}`);
+      
+      // Inserir o encontro na tabela meetings
+      const { data: meetingData, error: meetingError } = await supabase
+        .from('meetings')
+        .insert({
+          title: formData.tema || `Encontro do dia ${new Date(formData.data).toLocaleDateString('pt-BR')}`,
+          description: formData.observacoes || null,
+          date: dateTime.toISOString(),
+          location: formData.local,
+          attendance_count: formData.presentes ? parseInt(formData.presentes) : 0,
+          notes: `Líder: ${formData.lider}`,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (meetingError) {
+        console.error('Erro ao salvar encontro:', meetingError);
+        throw new Error(meetingError.message);
+      }
+
+      toast({
+        title: "Encontro registrado!",
+        description: "O encontro foi salvo com sucesso no banco de dados.",
+      });
+
+      // Reset form
+      setFormData({
+        data: "",
+        horario: "",
+        local: "",
+        lider: "",
+        tema: "",
+        presentes: "",
+        observacoes: ""
+      });
+
+      console.log('Encontro salvo:', meetingData);
+      
+    } catch (error: any) {
+      console.error('Erro ao registrar encontro:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar o encontro. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -189,9 +241,10 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
                   </Button>
                   <Button 
                     type="submit" 
-                    className="flex-1 bg-gradient-primary hover:scale-105 transition-all duration-200 shadow-soft"
+                    disabled={loading}
+                    className="flex-1 bg-gradient-primary hover:scale-105 transition-all duration-200 shadow-soft disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Salvar Encontro
+                    {loading ? 'Salvando...' : 'Salvar Encontro'}
                   </Button>
                 </div>
               </form>

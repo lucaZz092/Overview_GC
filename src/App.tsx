@@ -6,7 +6,12 @@ import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { RegistroUser } from "@/components/RegistroUser";
+import { TestRegistro } from "@/components/TestRegistro";
 import { MeusRelatorios } from "@/components/MeusRelatorios";
+import TestUsersManager from "@/components/TestUsersManager";
+import DatabaseSetup from "@/components/DatabaseSetup";
+import QuickSetup from "@/components/QuickSetup";
+import CleanupTestUsers from "@/components/CleanupTestUsers";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -23,6 +28,11 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/registro" element={<RegistroUser onRegister={handleRegister} />} />
+      <Route path="/test-registro" element={<TestRegistro />} />
+      <Route path="/test-users" element={<TestUsersManager />} />
+      <Route path="/setup-db" element={<DatabaseSetup />} />
+      <Route path="/quick-setup" element={<QuickSetup />} />
+      <Route path="/cleanup" element={<CleanupTestUsers />} />
       <Route path="/meus-relatorios" element={
         <ProtectedRoute>
           <MeusRelatorios onBack={() => navigate("/")} />

@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut } from "lucide-react";
+import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut, User, Mail, Shield, Calendar as CalendarIcon } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/lib/supabase";
 
 interface DashboardProps {
   userType: string;
@@ -16,9 +18,98 @@ interface DashboardProps {
 export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: DashboardProps) {
   const { user } = useAuthContext();
   const { profile, loading, isAdmin, isPastor, isLeader } = useUserProfile();
+  
+  // Estados para dados reais
+  const [meetingsStats, setMeetingsStats] = useState({
+    thisMonth: 0,
+    total: 0,
+    loading: true
+  });
+  const [membersCount, setMembersCount] = useState(0);
 
   // Usar o userType escolhido pelo admin, ou o role do perfil se não for admin
   const effectiveRole = (profile?.role === 'admin' && userType) ? userType : profile?.role;
+
+  // Hook para buscar dados reais
+  useEffect(() => {
+    const fetchRealData = async () => {
+      if (!user) return;
+
+      try {
+        // Calcular início do mês atual
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        // Query base para encontros
+        let meetingsQuery = supabase
+          .from('meetings')
+          .select('id, date, created_at');
+
+        // Query base para membros
+        let membersQuery = supabase
+          .from('members')
+          .select('id', { count: 'exact' });
+
+        // Filtrar por usuário específico para co-líderes e líderes
+        if (effectiveRole === 'co_leader' || effectiveRole === 'leader') {
+          meetingsQuery = meetingsQuery.eq('user_id', user.id);
+          membersQuery = membersQuery.eq('user_id', user.id);
+        }
+        // Para pastores e admins, mostrar dados de todos
+
+        // Buscar encontros (executar queries em paralelo)
+        const [meetingsResult, membersResult] = await Promise.allSettled([
+          meetingsQuery,
+          membersQuery
+        ]);
+
+        // Processar resultado dos encontros
+        if (meetingsResult.status === 'fulfilled') {
+          const { data: allMeetings, error: meetingsError } = meetingsResult.value;
+          
+          if (meetingsError) {
+            console.error('Erro ao buscar encontros:', meetingsError);
+            setMeetingsStats(prev => ({ ...prev, loading: false }));
+          } else {
+            const total = allMeetings?.length || 0;
+            const thisMonth = allMeetings?.filter(meeting => 
+              new Date(meeting.date) >= startOfMonth
+            ).length || 0;
+
+            setMeetingsStats({
+              thisMonth,
+              total,
+              loading: false
+            });
+          }
+        } else {
+          console.error('Erro ao buscar encontros:', meetingsResult.reason);
+          setMeetingsStats(prev => ({ ...prev, loading: false }));
+        }
+
+        // Processar resultado dos membros
+        if (membersResult.status === 'fulfilled') {
+          const { count: membersTotal, error: membersError } = membersResult.value;
+          
+          if (membersError) {
+            console.error('Erro ao buscar membros:', membersError);
+          } else {
+            setMembersCount(membersTotal || 0);
+          }
+        } else {
+          console.error('Erro ao buscar membros:', membersResult.reason);
+        }
+
+      } catch (error) {
+        console.error('Erro ao buscar dados do dashboard:', error);
+        setMeetingsStats(prev => ({ ...prev, loading: false }));
+      }
+    };
+
+    if (user && effectiveRole) {
+      fetchRealData();
+    }
+  }, [user, effectiveRole]);
 
   // Função para formatar o nome do GC para exibição
   const formatGCName = (gcCode: string | undefined) => {
@@ -43,6 +134,86 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
     };
     
     return gcNames[gcCode] || gcCode;
+  };
+
+  // Componente de dropdown do usuário
+  const UserDropdown = () => {
+    const formatDate = (dateString: string) => {
+      return new Date(dateString).toLocaleDateString('pt-BR');
+    };
+
+    const getRoleLabel = (role: string) => {
+      switch (role) {
+        case 'admin': return 'Administrador';
+        case 'pastor': return 'Pastor';
+        case 'leader': return 'Líder';
+        case 'co_leader': return 'Co-líder';
+        default: return role;
+      }
+    };
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="text-white hover:bg-white/10 p-2"
+          >
+            <User className="h-5 w-5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-80" align="end">
+          <DropdownMenuLabel>Informações do Usuário</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          
+          <div className="p-3 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
+                <User className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">{profile?.name || 'Nome não definido'}</p>
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <Shield className="h-3 w-3" />
+                  {getRoleLabel(effectiveRole)}
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-gray-600">
+                <Mail className="h-4 w-4" />
+                <span>{user?.email}</span>
+              </div>
+              
+              {profile?.grupo_crescimento && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Users className="h-4 w-4" />
+                  <span>{formatGCName(profile.grupo_crescimento)}</span>
+                </div>
+              )}
+              
+              {profile?.created_at && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <CalendarIcon className="h-4 w-4" />
+                  <span>Membro desde {formatDate(profile.created_at)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DropdownMenuSeparator />
+          <DropdownMenuItem 
+            onClick={onLogout}
+            className="text-red-600 focus:text-red-600 cursor-pointer"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sair da conta
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
   };
 
   // Debug para entender o que está acontecendo
@@ -226,28 +397,28 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
   // Estatísticas específicas para pastores (visão geral completa)
   const pastorStats = [
     {
-      title: "Grupos Ativos",
-      value: "28",
-      icon: Users,
-      description: "Grupos de crescimento ativos"
+      title: "Total de Encontros",
+      value: meetingsStats.loading ? "..." : meetingsStats.total.toString(),
+      icon: Calendar,
+      description: "Registrados no sistema"
     },
     {
       title: "Encontros este Mês",
-      value: "112",
-      icon: Calendar,
+      value: meetingsStats.loading ? "..." : meetingsStats.thisMonth.toString(),
+      icon: TrendingUp,
       description: "Reuniões realizadas"
     },
     {
-      title: "Membros Total",
-      value: "350",
-      icon: TrendingUp,
-      description: "Pessoas alcançadas"
+      title: "Total de Membros",
+      value: membersCount.toString(),
+      icon: Users,
+      description: "Cadastrados no sistema"
     },
     {
-      title: "Regiões",
-      value: "8",
+      title: "Usuários Ativos",
+      value: "---", // Pode implementar depois
       icon: MapPin,
-      description: "Áreas de atuação"
+      description: "Líderes e co-líderes"
     }
   ];
 
@@ -261,21 +432,21 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
     },
     {
       title: "Encontros este Mês",
-      value: "12",
+      value: meetingsStats.loading ? "..." : meetingsStats.thisMonth.toString(),
       icon: Calendar,
       description: "Do seu grupo"
     },
     {
       title: "Membros Ativos",
-      value: "42",
+      value: membersCount.toString(),
       icon: TrendingUp,
       description: "No seu grupo"
     },
     {
-      title: "Co-líderes",
-      value: "2",
+      title: "Encontros Total",
+      value: meetingsStats.loading ? "..." : meetingsStats.total.toString(),
       icon: MapPin,
-      description: "Trabalhando com você"
+      description: "Registrados por você"
     }
   ];
 
@@ -288,10 +459,22 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
       description: "Grupo que você co-lidera"
     },
     {
-      title: "Encontros Registrados",
-      value: "8",
+      title: "Encontros este Mês",
+      value: meetingsStats.loading ? "..." : meetingsStats.thisMonth.toString(),
       icon: Calendar,
-      description: "Este mês"
+      description: "Registrados por você"
+    },
+    {
+      title: "Total de Encontros",
+      value: meetingsStats.loading ? "..." : meetingsStats.total.toString(),
+      icon: TrendingUp,
+      description: "Todos os registros"
+    },
+    {
+      title: "Membros",
+      value: membersCount.toString(),
+      icon: MapPin,
+      description: "No seu grupo"
     }
   ];
 
@@ -309,15 +492,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
           </div>
           <div className="flex items-center gap-4">
             {getUserBadge()}
-            <span className="text-white/80 text-sm">{user?.email}</span>
-            <Button 
-              variant="outline" 
-              onClick={onLogout}
-              className="border-white/20 text-white hover:bg-white/10"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sair
-            </Button>
+            <UserDropdown />
           </div>
         </div>
       </div>
@@ -391,7 +566,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
               <p className="text-muted-foreground">Gerencie o seu grupo de crescimento</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
               <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card" 
                     onClick={() => onNavigate("registro-encontro")}>
                 <CardHeader className="text-center pb-4">
@@ -401,6 +576,19 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
                   <CardTitle>Registrar Encontro</CardTitle>
                   <CardDescription>
                     Adicione um novo encontro do seu grupo de crescimento
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+                    onClick={() => onNavigate("encontros-registrados")}>
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Calendar className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Ver Encontros</CardTitle>
+                  <CardDescription>
+                    Visualize todos os encontros registrados
                   </CardDescription>
                 </CardHeader>
               </Card>
