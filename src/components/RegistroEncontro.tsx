@@ -89,8 +89,6 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
         presentes: "",
         observacoes: ""
       });
-
-      console.log('Encontro salvo:', meetingData);
       
     } catch (error: any) {
       console.error('Erro ao registrar encontro:', error);

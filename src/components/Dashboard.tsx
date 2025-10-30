@@ -216,16 +216,6 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
     );
   };
 
-  // Debug para entender o que está acontecendo
-  console.log('🔍 Dashboard Debug:');
-  console.log('  User Email:', user?.email);
-  console.log('  UserType:', userType);
-  console.log('  Profile Role:', profile?.role);
-  console.log('  Profile GC:', profile?.grupo_crescimento);
-  console.log('  Loading:', loading);
-  console.log('  Effective Role:', effectiveRole);
-  console.log('  Full Profile:', profile);
-
   // Se ainda estiver carregando e não tiver dados, mostrar loading
   if (loading) {
     return (
@@ -266,20 +256,14 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <Button 
-                  onClick={() => {
-                    console.log('🎭 Admin escolheu: pastor');
-                    onRoleSelect?.('pastor');
-                  }}
+                  onClick={() => onRoleSelect('pastor')}
                   className="w-full bg-gradient-primary text-lg py-6"
                 >
                   🙏 Pastor
                 </Button>
                 
                 <Button 
-                  onClick={() => {
-                    console.log('🎭 Admin escolheu: leader');
-                    onRoleSelect?.('leader');
-                  }}
+                  onClick={() => onRoleSelect('leader')}
                   className="w-full bg-gradient-primary text-lg py-6"
                   variant="outline"
                 >
@@ -287,10 +271,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
                 </Button>
                 
                 <Button 
-                  onClick={() => {
-                    console.log('🎭 Admin escolheu: co_leader');
-                    onRoleSelect?.('co_leader');
-                  }}
+                  onClick={() => onRoleSelect('co_leader')}
                   className="w-full bg-gradient-primary text-lg py-6"
                   variant="outline"
                 >

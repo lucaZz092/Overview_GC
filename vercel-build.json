@@ -1,7 +1,0 @@
-{
-  "name": "vercel-build-script",
-  "version": "1.0.0",
-  "scripts": {
-    "vercel-build": "npm install @supabase/supabase-js@^2.77.0 && npm run build"
-  }
-}
