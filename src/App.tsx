@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import { Register } from "@/components/Register";
+import { RegistroUser } from "@/components/RegistroUser";
 import { MeusRelatorios } from "@/components/MeusRelatorios";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -15,14 +15,14 @@ const queryClient = new QueryClient();
 function AppRoutes() {
   const navigate = useNavigate();
 
-  const handleRegister = () => {
+  const handleRegister = (userType: string) => {
     navigate("/");
   };
 
   return (
     <Routes>
       <Route path="/" element={<Index />} />
-      <Route path="/registro" element={<Register onRegister={handleRegister} />} />
+      <Route path="/registro" element={<RegistroUser onRegister={handleRegister} />} />
       <Route path="/meus-relatorios" element={
         <ProtectedRoute>
           <MeusRelatorios onBack={() => navigate("/")} />
