@@ -2,9 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Calendar, MapPin, Users, Clock, FileText } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Clock, FileText, Trash2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface EncontrosRegistradosProps {
   onBack: () => void;
@@ -26,6 +38,10 @@ export const EncontrosRegistrados: React.FC<EncontrosRegistradosProps> = ({ onBa
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  
+  // Verificar se é o admin específico
+  const isSpecificAdmin = user?.email === 'lucacampeao2013@gmail.com';
 
   useEffect(() => {
     const loadMeetings = async () => {
@@ -36,11 +52,18 @@ export const EncontrosRegistrados: React.FC<EncontrosRegistradosProps> = ({ onBa
 
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        
+        // Query base
+        let query = supabase
           .from('meetings')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('date', { ascending: false });
+          .select('*');
+
+        // Se não for o admin específico, filtrar apenas encontros do usuário
+        if (!isSpecificAdmin) {
+          query = query.eq('user_id', user.id);
+        }
+
+        const { data, error } = await query.order('date', { ascending: false });
           
         if (error) throw error;
         setMeetings(data || []);
@@ -84,6 +107,48 @@ export const EncontrosRegistrados: React.FC<EncontrosRegistradosProps> = ({ onBa
     return `${Math.floor(diffInDays / 30)} meses atrás`;
   };
 
+  const handleDeleteMeeting = async (meetingId: string, meetingTitle: string) => {
+    if (!isSpecificAdmin) {
+      toast({
+        title: "Acesso negado",
+        description: "Apenas o administrador principal pode excluir encontros.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setDeletingId(meetingId);
+
+    try {
+      const { error } = await supabase
+        .from('meetings')
+        .delete()
+        .eq('id', meetingId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Remover da lista local
+      setMeetings(prev => prev.filter(meeting => meeting.id !== meetingId));
+
+      toast({
+        title: "Encontro excluído",
+        description: `"${meetingTitle}" foi removido com sucesso.`,
+      });
+
+    } catch (error: any) {
+      console.error('Erro ao excluir encontro:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: error.message || "Não foi possível excluir o encontro.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (error) {
     return (
       <div className="min-h-screen bg-background">
@@ -123,9 +188,22 @@ export const EncontrosRegistrados: React.FC<EncontrosRegistradosProps> = ({ onBa
           >
             <ArrowLeft className="w-6 h-6" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Encontros Registrados</h1>
-            <p className="text-white/80">Visualize todos os encontros que você registrou</p>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-white">Encontros Registrados</h1>
+              {isSpecificAdmin && (
+                <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Admin - Pode Excluir
+                </Badge>
+              )}
+            </div>
+            <p className="text-white/80">
+              {isSpecificAdmin 
+                ? "Como administrador, você pode visualizar e excluir qualquer encontro"
+                : "Visualize todos os encontros que você registrou"
+              }
+            </p>
           </div>
         </div>
       </div>
@@ -150,7 +228,46 @@ export const EncontrosRegistrados: React.FC<EncontrosRegistradosProps> = ({ onBa
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg mb-2">{meeting.title}</CardTitle>
+                      <div className="flex items-start justify-between mb-2">
+                        <CardTitle className="text-lg">{meeting.title}</CardTitle>
+                        {isSpecificAdmin && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 ml-2"
+                                disabled={deletingId === meeting.id}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="flex items-center gap-2">
+                                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                                  Excluir Encontro
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir o encontro "{meeting.title}"?
+                                  <br />
+                                  <strong>Esta ação não pode ser desfeita.</strong>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteMeeting(meeting.id, meeting.title)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                  disabled={deletingId === meeting.id}
+                                >
+                                  {deletingId === meeting.id ? 'Excluindo...' : 'Excluir'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                       <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
