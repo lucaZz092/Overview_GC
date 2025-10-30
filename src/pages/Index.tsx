@@ -8,6 +8,8 @@ import { MeusRelatorios } from "@/components/MeusRelatorios";
 import EncontrosRegistrados from "@/components/EncontrosRegistrados";
 import { ConnectionTest } from "@/components/ConnectionTest";
 import { TestUserInfo } from "@/components/TestUserInfo";
+import { TestDataSetup } from "@/components/TestDataSetup";
+import { SystemTest } from "@/components/SystemTest";
 import { useAuthContext } from "@/contexts/AuthContext";
 
 const Index = () => {
@@ -92,16 +94,38 @@ const Index = () => {
       return <MeusRelatorios onBack={handleBack} />;
     case "teste-user-info":
       return <TestUserInfo />;
+    case "teste-data-setup":
+      return <TestDataSetup />;
+    case "system-test":
+      return <SystemTest />;
     default:
       return (
         <div>
-          <div className="fixed top-4 right-4 z-50">
-            <button 
-              onClick={() => setCurrentPage("teste-user-info")}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors text-sm"
-            >
-              🔍 Info Usuário
-            </button>
+          <div className="fixed top-4 right-4 z-50 space-y-2">
+            <div>
+              <button 
+                onClick={() => setCurrentPage("teste-user-info")}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors text-sm block w-full"
+              >
+                🔍 Info Usuário
+              </button>
+            </div>
+            <div>
+              <button 
+                onClick={() => setCurrentPage("teste-data-setup")}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-700 transition-colors text-sm block w-full"
+              >
+                🧪 Setup Dados
+              </button>
+            </div>
+            <div>
+              <button 
+                onClick={() => setCurrentPage("system-test")}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-purple-700 transition-colors text-sm block w-full"
+              >
+                🧪 Teste Sistema
+              </button>
+            </div>
           </div>
           <Dashboard 
             userType={userType} 
