@@ -183,21 +183,6 @@ export function Register({ onRegister }: RegisterProps) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="invitationCode">Código de Convite (opcional)</Label>
-                <Input
-                  id="invitationCode"
-                  type="text"
-                  value={invitationCode}
-                  onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
-                  placeholder="Ex: LIDER-2024"
-                />
-                <p className="text-xs text-gray-500">
-                  Se você tem um código de convite, digite aqui para ter um papel específico. 
-                  Caso contrário, será registrado como Co-Líder.
-                </p>
-              </div>
-
               <div className="flex gap-2">
                 <Button 
                   type="submit" 

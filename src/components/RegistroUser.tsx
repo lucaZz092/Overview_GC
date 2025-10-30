@@ -122,7 +122,8 @@ export function RegistroUser({ onRegister }: RegistroProps) {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!nome || !email || !password || !userGC) {
+    // Validações básicas
+    if (!nome || !email || !password) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
@@ -135,6 +136,18 @@ export function RegistroUser({ onRegister }: RegistroProps) {
       toast({
         title: "Erro",
         description: "Selecione o tipo de usuário",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar GC para co-líderes e líderes
+    const currentRole = code ? codeInfo?.role : userType;
+    if ((currentRole === 'co_leader' || currentRole === 'leader') && !userGC) {
+      toast({
+        title: "Erro",
+        description: "Selecione o Grupo de Crescimento que você " + 
+                    (currentRole === 'co_leader' ? 'co-lidera' : 'lidera'),
         variant: "destructive",
       });
       return;
@@ -171,13 +184,19 @@ export function RegistroUser({ onRegister }: RegistroProps) {
       }
 
       // Atualizar perfil do usuário
+      const updateData: any = {
+        name: nome,
+        role: finalRole,
+      };
+
+      // Adicionar grupo_crescimento apenas para co-líderes e líderes
+      if ((finalRole === 'co_leader' || finalRole === 'leader') && userGC) {
+        updateData.grupo_crescimento = userGC;
+      }
+
       const { error: profileError } = await supabase
         .from('users')
-        .update({
-          full_name: nome,
-          role: finalRole,
-          group_name: userGC,
-        })
+        .update(updateData)
         .eq('id', authResult.user.id);
 
       if (profileError) {
@@ -293,23 +312,39 @@ export function RegistroUser({ onRegister }: RegistroProps) {
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="userType">Selecione o seu GC</Label>
-                <Select value={userGC} onValueChange={setUserGC}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione seu perfil" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="gc-faith">GC Legacy Faith</SelectItem>
-                    <SelectItem value="gc-awake">GC Legacy Awake</SelectItem>
-                    <SelectItem value="gc-kairos">GC Legacy Kairós</SelectItem>
-                    <SelectItem value="gc-revival">GC Legacy Revival</SelectItem>
-                    <SelectItem value="gc-chosen">GC Legacy Chosen</SelectItem>
-                    <SelectItem value="gc-overflow">GC Legacy Overflow</SelectItem>
-                    <SelectItem value="gc-rise">GC Legacy Rise</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Campo de GC só aparece para co-líderes e líderes */}
+              {((code && codeInfo && (codeInfo.role === 'co_leader' || codeInfo.role === 'leader')) || 
+                (!code && (userType === 'co_leader' || userType === 'leader'))) && (
+                <div className="space-y-2">
+                  <Label htmlFor="userGC">
+                    {userType === 'co_leader' || (codeInfo && codeInfo.role === 'co_leader') 
+                      ? 'Selecione o GC que você co-lidera' 
+                      : 'Selecione o GC que você lidera'}
+                  </Label>
+                  <Select value={userGC} onValueChange={setUserGC}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Escolha seu Grupo de Crescimento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gc-legacy-faith">GC Legacy Faith</SelectItem>
+                      <SelectItem value="gc-legacy-awake">GC Legacy Awake</SelectItem>
+                      <SelectItem value="gc-legacy-kairos">GC Legacy Kairós</SelectItem>
+                      <SelectItem value="gc-legacy-revival">GC Legacy Revival</SelectItem>
+                      <SelectItem value="gc-legacy-chosen">GC Legacy Chosen</SelectItem>
+                      <SelectItem value="gc-legacy-overflow">GC Legacy Overflow</SelectItem>
+                      <SelectItem value="gc-legacy-rise">GC Legacy Rise</SelectItem>
+                      <SelectItem value="gc-vila-nova">GC Vila Nova</SelectItem>
+                      <SelectItem value="gc-centro">GC Centro</SelectItem>
+                      <SelectItem value="gc-norte">GC Norte</SelectItem>
+                      <SelectItem value="gc-sul">GC Sul</SelectItem>
+                      <SelectItem value="gc-leste">GC Leste</SelectItem>
+                      <SelectItem value="gc-oeste">GC Oeste</SelectItem>
+                      <SelectItem value="gc-juventude">GC Juventude</SelectItem>
+                      <SelectItem value="gc-casais">GC Casais</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {!code && (
                 <div className="space-y-2">

@@ -7,6 +7,7 @@ export interface UserProfile {
   email: string;
   name: string;
   role: 'admin' | 'pastor' | 'leader' | 'co_leader';
+  grupo_crescimento?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;

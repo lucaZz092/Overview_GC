@@ -22,11 +22,37 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
   // Usar o userType escolhido pelo admin, ou o role do perfil se não for admin
   const effectiveRole = (profile?.role === 'admin' && userType) ? userType : profile?.role;
 
+  // Função para formatar o nome do GC para exibição
+  const formatGCName = (gcCode: string | undefined) => {
+    if (!gcCode) return "Não definido";
+    
+    const gcNames: { [key: string]: string } = {
+      'gc-legacy-faith': 'GC Legacy Faith',
+      'gc-legacy-awake': 'GC Legacy Awake', 
+      'gc-legacy-kairos': 'GC Legacy Kairós',
+      'gc-legacy-revival': 'GC Legacy Revival',
+      'gc-legacy-chosen': 'GC Legacy Chosen',
+      'gc-legacy-overflow': 'GC Legacy Overflow',
+      'gc-legacy-rise': 'GC Legacy Rise',
+      'gc-vila-nova': 'GC Vila Nova',
+      'gc-centro': 'GC Centro',
+      'gc-norte': 'GC Norte',
+      'gc-sul': 'GC Sul',
+      'gc-leste': 'GC Leste',
+      'gc-oeste': 'GC Oeste',
+      'gc-juventude': 'GC Juventude',
+      'gc-casais': 'GC Casais'
+    };
+    
+    return gcNames[gcCode] || gcCode;
+  };
+
   // Debug para entender o que está acontecendo
   console.log('🔍 Dashboard Debug:');
   console.log('  User Email:', user?.email);
   console.log('  UserType:', userType);
   console.log('  Profile Role:', profile?.role);
+  console.log('  Profile GC:', profile?.grupo_crescimento);
   console.log('  Loading:', loading);
   console.log('  Effective Role:', effectiveRole);
   console.log('  Full Profile:', profile);
@@ -230,28 +256,28 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
   // Estatísticas específicas para líderes e pastores
   const liderStats = [
     {
-      title: "Meus Grupos",
-      value: "3",
+      title: "Meu Grupo Principal",
+      value: formatGCName(profile?.grupo_crescimento),
       icon: Users,
-      description: "Grupos sob sua liderança"
+      description: "Grupo que você lidera"
     },
     {
       title: "Encontros este Mês",
       value: "12",
       icon: Calendar,
-      description: "Dos seus grupos"
+      description: "Do seu grupo"
     },
     {
       title: "Membros Ativos",
       value: "42",
       icon: TrendingUp,
-      description: "Nos seus grupos"
+      description: "No seu grupo"
     },
     {
-      title: "Região Norte",
-      value: "1",
+      title: "Co-líderes",
+      value: "2",
       icon: MapPin,
-      description: "Área de responsabilidade"
+      description: "Trabalhando com você"
     }
   ];
 
@@ -259,7 +285,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
   const coLiderStats = [
     {
       title: "Meu Grupo",
-      value: "GC Vila Nova",
+      value: formatGCName(profile?.grupo_crescimento),
       icon: Users,
       description: "Grupo que você co-lidera"
     },
