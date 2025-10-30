@@ -10,8 +10,6 @@ import { MeusRelatorios } from "@/components/MeusRelatorios";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
-console.log('🚀 App.tsx loading...');
-
 const queryClient = new QueryClient();
 
 function AppRoutes() {

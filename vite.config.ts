@@ -22,23 +22,15 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     rollupOptions: {
-      external: [],
       output: {
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            if (id.includes('@supabase')) {
-              return 'supabase';
-            }
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
-            return 'vendor';
-          }
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js']
         }
       }
     }
   },
   optimizeDeps: {
-    include: ['@supabase/supabase-js', 'react', 'react-dom']
+    include: ['@supabase/supabase-js', 'react', 'react-dom', 'react/jsx-runtime']
   }
 });
