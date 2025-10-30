@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import Index from './pages/Index.tsx'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import DiagnosticPage from './components/DiagnosticPage.tsx'
+import { AuthProvider } from './contexts/AuthContext.tsx'
 import './index.css'
 
 // Verificar variáveis de ambiente
@@ -19,7 +20,11 @@ const checkEnv = () => {
 function SafeApp() {
   try {
     checkEnv();
-    return <Index />
+    return (
+      <AuthProvider>
+        <Index />
+      </AuthProvider>
+    )
   } catch (error) {
     console.error('Erro na inicialização:', error);
     // Em caso de erro, mostrar página de diagnóstico
