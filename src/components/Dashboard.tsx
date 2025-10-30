@@ -2,10 +2,9 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut, Link } from "lucide-react";
+import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { LinkGenerator } from "@/components/LinkGenerator";
 
 interface DashboardProps {
   userType: string;
@@ -15,7 +14,6 @@ interface DashboardProps {
 }
 
 export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: DashboardProps) {
-  const [showLinkGenerator, setShowLinkGenerator] = useState(false);
   const { user } = useAuthContext();
   const { profile, loading, isAdmin, isPastor, isLeader } = useUserProfile();
 
@@ -297,11 +295,6 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
     }
   ];
 
-  // Se deve mostrar o gerador de links
-  if (showLinkGenerator) {
-    return <LinkGenerator onBack={() => setShowLinkGenerator(false)} />;
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -519,20 +512,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
               </CardHeader>
             </Card>
 
-            <Card 
-              className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
-              onClick={() => setShowLinkGenerator(true)}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link className="h-5 w-5 text-primary" />
-                  Links de Convite
-                </CardTitle>
-                <CardDescription>
-                  Gere links temporários para novos usuários
-                </CardDescription>
-              </CardHeader>
-            </Card>
+
           </div>
         ) : null}
 

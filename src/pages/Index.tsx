@@ -6,7 +6,6 @@ import { RegistroMembro } from "@/components/RegistroMembro";
 import { MembrosRegistrados } from "@/components/MembrosRegistrados";
 import { MeusRelatorios } from "@/components/MeusRelatorios";
 import { ConnectionTest } from "@/components/ConnectionTest";
-import { InvitationManager } from "@/components/InvitationManager";
 import { useAuthContext } from "@/contexts/AuthContext";
 
 const Index = () => {
@@ -87,8 +86,6 @@ const Index = () => {
       return <MembrosRegistrados onBack={handleBack} />;
     case "meus-relatorios":
       return <MeusRelatorios onBack={handleBack} />;
-    case "invitation-codes":
-      return <InvitationManager onBack={handleBack} />;
     default:
       return (
         <Dashboard 
