@@ -7,6 +7,7 @@ import { MembrosRegistrados } from "@/components/MembrosRegistrados";
 import { MeusRelatorios } from "@/components/MeusRelatorios";
 import EncontrosRegistrados from "@/components/EncontrosRegistrados";
 import { ConnectionTest } from "@/components/ConnectionTest";
+import { TestUserInfo } from "@/components/TestUserInfo";
 import { useAuthContext } from "@/contexts/AuthContext";
 
 const Index = () => {
@@ -65,7 +66,7 @@ const Index = () => {
   if (!user) {
     return (
       <div>
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed top-4 right-4 z-50 flex gap-2">
           <button 
             onClick={() => setShowConnectionTest(true)}
             className="bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-red-700 transition-colors text-sm"
@@ -89,14 +90,26 @@ const Index = () => {
       return <EncontrosRegistrados onBack={handleBack} />;
     case "meus-relatorios":
       return <MeusRelatorios onBack={handleBack} />;
+    case "teste-user-info":
+      return <TestUserInfo />;
     default:
       return (
-        <Dashboard 
-          userType={userType} 
-          onNavigate={handleNavigate} 
-          onLogout={handleLogout}
-          onRoleSelect={handleRoleSelect}
-        />
+        <div>
+          <div className="fixed top-4 right-4 z-50">
+            <button 
+              onClick={() => setCurrentPage("teste-user-info")}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors text-sm"
+            >
+              🔍 Info Usuário
+            </button>
+          </div>
+          <Dashboard 
+            userType={userType} 
+            onNavigate={handleNavigate} 
+            onLogout={handleLogout}
+            onRoleSelect={handleRoleSelect}
+          />
+        </div>
       );
   }
 };

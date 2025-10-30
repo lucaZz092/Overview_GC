@@ -9,6 +9,7 @@ import { Users, ArrowLeft, Phone, Mail, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface RegistroMembroProps {
   onBack: () => void;
@@ -20,21 +21,21 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
     email: "",
     telefone: "",
     endereco: "",
-    grupo: "",
     dataNascimento: "",
     estadoCivil: "",
     observacoes: ""
   });
   const [loading, setLoading] = useState(false);
   const { user } = useAuthContext();
+  const { profile } = useUserProfile();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome || !formData.telefone || !formData.grupo) {
+    if (!formData.nome || !formData.telefone) {
       toast({
         title: "Erro",
-        description: "Preencha todos os campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios (nome e telefone)",
         variant: "destructive",
       });
       return;
@@ -44,6 +45,15 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
       toast({
         title: "Erro",
         description: "Você precisa estar logado para cadastrar um membro",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!profile?.grupo_crescimento) {
+      toast({
+        title: "Erro",
+        description: "Seu perfil precisa ter um grupo de crescimento associado",
         variant: "destructive",
       });
       return;
@@ -60,7 +70,7 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
         birth_date: formData.dataNascimento || null,
         address: formData.endereco || null,
         joined_date: new Date().toISOString().split('T')[0], // Data atual
-        notes: `Grupo: ${formData.grupo}${formData.estadoCivil ? `, Estado Civil: ${formData.estadoCivil}` : ''}${formData.observacoes ? `, Observações: ${formData.observacoes}` : ''}`,
+        notes: `Grupo: ${profile.grupo_crescimento}${formData.estadoCivil ? `, Estado Civil: ${formData.estadoCivil}` : ''}${formData.observacoes ? `, Observações: ${formData.observacoes}` : ''}`,
         user_id: user.id,
         is_active: true
       };
@@ -86,7 +96,7 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
 
       toast({
         title: "Membro cadastrado!",
-        description: `${formData.nome} foi adicionado com sucesso ao ${formData.grupo}.`,
+        description: `${formData.nome} foi adicionado com sucesso ao ${profile.grupo_crescimento}.`,
       });
 
       // Reset form
@@ -95,7 +105,6 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
         email: "",
         telefone: "",
         endereco: "",
-        grupo: "",
         dataNascimento: "",
         estadoCivil: "",
         observacoes: ""
@@ -133,7 +142,9 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-white">Cadastrar Membro</h1>
-            <p className="text-white/80">Adicione um novo membro ao grupo de crescimento</p>
+            <p className="text-white/80">
+              Adicione um novo membro ao {profile?.grupo_crescimento || "seu grupo de crescimento"}
+            </p>
           </div>
         </div>
       </div>
@@ -147,7 +158,7 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
                 Dados do Membro
               </CardTitle>
               <CardDescription>
-                Preencha as informações do novo membro
+                Preencha as informações do novo membro. O grupo será automaticamente definido como {profile?.grupo_crescimento || "seu GC"}.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -208,18 +219,18 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="grupo">Grupo de Crescimento *</Label>
-                  <Select value={formData.grupo} onValueChange={(value) => handleChange("grupo", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o grupo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="vila-nova">GC Vila Nova</SelectItem>
-                      <SelectItem value="centro">GC Centro</SelectItem>
-                      <SelectItem value="jardim-america">GC Jardim América</SelectItem>
-                      <SelectItem value="santa-cruz">GC Santa Cruz</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Grupo de Crescimento</Label>
+                  <div className="p-3 bg-muted/50 rounded-md border">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      <span className="font-medium">
+                        {profile?.grupo_crescimento || "Carregando..."}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      O membro será automaticamente associado ao seu grupo
+                    </p>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
