@@ -87,12 +87,28 @@ export function LinkGenerator({ onBack }: LinkGeneratorProps) {
 
       // Copiar link automaticamente
       const link = `${window.location.origin}/registro?code=${code}`;
-      await navigator.clipboard.writeText(link);
-
-      toast({
-        title: 'Link gerado com sucesso!',
-        description: `Link copiado para a área de transferência. Válido por 30 minutos.`,
-      });
+      
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(link);
+          toast({
+            title: 'Link gerado com sucesso!',
+            description: `Link copiado para a área de transferência. Válido por 30 minutos.`,
+          });
+        } else {
+          // Fallback para navegadores que não suportam clipboard API
+          toast({
+            title: 'Link gerado com sucesso!',
+            description: `Link: ${link}`,
+          });
+        }
+      } catch (clipboardError) {
+        console.warn('Erro ao copiar para clipboard:', clipboardError);
+        toast({
+          title: 'Link gerado com sucesso!',
+          description: `Link: ${link}`,
+        });
+      }
 
       fetchCodes();
     } catch (error: any) {
@@ -109,11 +125,28 @@ export function LinkGenerator({ onBack }: LinkGeneratorProps) {
 
   const copyLink = (code: string) => {
     const link = `${window.location.origin}/registro?code=${code}`;
-    navigator.clipboard.writeText(link);
-    toast({
-      title: 'Link copiado!',
-      description: 'Link copiado para a área de transferência',
-    });
+    
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link);
+        toast({
+          title: 'Link copiado!',
+          description: 'Link copiado para a área de transferência',
+        });
+      } else {
+        // Fallback: mostrar o link para copiar manualmente
+        toast({
+          title: 'Link para copiar:',
+          description: link,
+        });
+      }
+    } catch (error) {
+      console.warn('Erro ao copiar:', error);
+      toast({
+        title: 'Link para copiar:',
+        description: link,
+      });
+    }
   };
 
   const getRoleBadge = (role: string) => {
