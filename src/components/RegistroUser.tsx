@@ -23,8 +23,7 @@ export function RegistroUser({ onRegister }: RegistroProps) {
   
   const { signUp } = useAuth();
 
-  console.log('🔍 RegistroUser - Current userType:', userType);
-  console.log('🔍 RegistroUser - Should show GC field:', userType === 'co_leader' || userType === 'leader');
+
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
+import Index from './pages/Index.tsx'
 import './index.css'
 
 // Error boundary component
@@ -23,7 +23,7 @@ function ErrorFallback({ error }: { error: Error }) {
 // Wrap App in error boundary
 function SafeApp() {
   try {
-    return <App />
+    return <Index />
   } catch (error) {
     console.error('App error:', error)
     return <ErrorFallback error={error as Error} />

@@ -137,7 +137,7 @@ export const MembrosRegistrados: React.FC<MembrosRegistradosProps> = ({ onBack }
         return;
       }
 
-      console.log('✅ Membros carregados:', data);
+
       setMembers(data || []);
       
     } catch (error) {
@@ -304,13 +304,3 @@ export const MembrosRegistrados: React.FC<MembrosRegistradosProps> = ({ onBack }
     </div>
   );
 }
-/*
-
-FUTURAS MELHORIAS:
-
-- Botao visualizar detalhes
-  - Dentro dele aparece as infos cadastradas e opção de inativar
-
-- Automatizar para aparecer automaticamente quando o membro é cadastrado
-
-*/
