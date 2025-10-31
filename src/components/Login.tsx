@@ -21,6 +21,7 @@ export function Login({ onLogin }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [showResendConfirmation, setShowResendConfirmation] = useState(false);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { signIn } = useAuth();
@@ -119,6 +120,40 @@ export function Login({ onLogin }: LoginProps) {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Erro",
+        description: "Digite seu email primeiro",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha",
+      });
+      setShowForgotPassword(false);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar email",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResendConfirmation = async () => {
     if (!email) {
       toast({
@@ -207,7 +242,8 @@ export function Login({ onLogin }: LoginProps) {
                   />
                 </div>
 
-                <div className="flex gap-2">
+                <div className="space-y-3">
+                  <div className="flex gap-2">
                     <Button 
                       type="submit" 
                       className="flex-1 bg-gradient-primary ..." 
@@ -223,6 +259,17 @@ export function Login({ onLogin }: LoginProps) {
                     >
                       Registrar
                     </Button>
+                  </div>
+                  
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      Esqueci minha senha
+                    </button>
+                  </div>
                 </div>
               </form>
             ) : (
@@ -269,6 +316,31 @@ export function Login({ onLogin }: LoginProps) {
                     Continuar
                   </Button>
                 </div>
+              </div>
+            )}
+
+            {showForgotPassword && !showRoleSelection && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800 mb-3">
+                  Digite seu email para receber um link de redefinição de senha
+                </p>
+                <Button 
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  disabled={loading}
+                >
+                  {loading ? "Enviando..." : "Enviar Email de Redefinição"}
+                </Button>
+                <Button 
+                  type="button"
+                  onClick={() => setShowForgotPassword(false)}
+                  variant="outline"
+                  className="w-full mt-2"
+                  disabled={loading}
+                >
+                  Cancelar
+                </Button>
               </div>
             )}
 
