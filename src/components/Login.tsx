@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import BlurText from "@/components/ui/blur-text";
+import TextType from "@/components/ui/text-type";
 
 
 interface LoginProps {
@@ -205,9 +206,14 @@ export function Login({ onLogin }: LoginProps) {
             direction="top"
             className="text-4xl font-bold text-white mb-2 justify-center"
           />
-          <p className="text-white/80">
-            Sistema de Gestão de Grupos de Crescimento
-          </p>
+          <TextType 
+            text={["Sistema de Gestão", "Grupos de Crescimento", "Bem-vindo!"]}
+            typingSpeed={75}
+            pauseDuration={1500}
+            showCursor={true}
+            cursorCharacter="|"
+            className="text-white/80 text-lg min-h-[28px]"
+          />
         </div>
 
         <Card className="shadow-strong border-0 bg-white/95 backdrop-blur-sm">
