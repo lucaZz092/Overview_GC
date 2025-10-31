@@ -7,18 +7,30 @@ const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || FALLBACK_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_KEY
 
-console.log('Supabase config:', {
-  url: supabaseUrl ? 'OK' : 'MISSING',
-  key: supabaseAnonKey ? 'OK' : 'MISSING',
-  envUrl: import.meta.env.VITE_SUPABASE_URL ? 'FROM_ENV' : 'FALLBACK',
-  envKey: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'FROM_ENV' : 'FALLBACK'
-})
+console.log('🔧 Inicializando Supabase...')
+console.log('📍 URL:', supabaseUrl)
+console.log('📍 URL source:', import.meta.env.VITE_SUPABASE_URL ? 'Environment Variable' : 'Fallback')
+console.log('📍 Key source:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Environment Variable' : 'Fallback')
+console.log('📍 Key presente:', supabaseAnonKey ? '✅ Sim' : '❌ Não')
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+  const errorMsg = 'Missing Supabase environment variables'
+  console.error('❌', errorMsg)
+  throw new Error(errorMsg)
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+let supabase: ReturnType<typeof createClient>
+
+try {
+  console.log('🚀 Criando cliente Supabase...')
+  supabase = createClient(supabaseUrl, supabaseAnonKey)
+  console.log('✅ Cliente Supabase criado com sucesso!')
+} catch (error) {
+  console.error('❌ Erro ao criar cliente Supabase:', error)
+  throw new Error(`Falha ao criar cliente Supabase: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+}
+
+export { supabase }
 
 // Helper functions for common operations
 export const getCurrentUser = async () => {

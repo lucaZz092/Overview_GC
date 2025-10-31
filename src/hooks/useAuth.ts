@@ -8,30 +8,47 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log('🔐 useAuth: Inicializando...')
+    
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession()
-      if (error) {
-        console.error('Error getting session:', error)
-      } else {
+      try {
+        console.log('🔐 useAuth: Buscando sessão inicial...')
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('❌ useAuth: Erro ao buscar sessão:', error)
+          throw new Error(`Erro ao buscar sessão: ${error.message}`)
+        }
+        
+        console.log('✅ useAuth: Sessão obtida:', session ? 'Usuário logado' : 'Sem usuário')
         setSession(session)
         setUser(session?.user ?? null)
+        setLoading(false)
+      } catch (err) {
+        console.error('❌ useAuth: Erro crítico ao inicializar:', err)
+        setLoading(false)
+        throw err
       }
-      setLoading(false)
     }
 
     getInitialSession()
 
     // Listen for auth changes
+    console.log('👂 useAuth: Configurando listener de auth...')
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔄 useAuth: Auth state changed:', event, session ? 'com sessão' : 'sem sessão')
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      console.log('🧹 useAuth: Limpando subscription...')
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {
