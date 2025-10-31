@@ -72,7 +72,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
             setMeetingsStats(prev => ({ ...prev, loading: false }));
           } else {
             const total = allMeetings?.length || 0;
-            const thisMonth = allMeetings?.filter(meeting => 
+            const thisMonth = (allMeetings as any[] || []).filter((meeting: any) => 
               new Date(meeting.date) >= startOfMonth
             ).length || 0;
 

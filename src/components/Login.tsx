@@ -47,13 +47,15 @@ export function Login({ onLogin }: LoginProps) {
         .from('users')
         .select('role')
         .eq('id', user.id)
-        .single();
+        .single() as { data: { role: string } | null; error: any };
 
       if (error || !userData) {
         console.error('Erro ao buscar role do usuário:', error);
+        setLoading(false);
+        return;
       }
 
-      const userRole = userData?.role || 'co_leader';
+      const userRole = userData.role || 'co_leader';
       
       console.log('🔍 Login Debug:');
       console.log('  User Role from DB:', userRole);

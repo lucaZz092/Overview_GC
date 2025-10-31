@@ -65,7 +65,7 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
           attendance_count: formData.presentes ? parseInt(formData.presentes) : 0,
           notes: `Líder: ${formData.lider}`,
           user_id: user.id
-        })
+        } as any)
         .select()
         .single();
 

@@ -66,8 +66,8 @@ export function RegistroUser({ onRegister }: RegistroProps) {
         updateData.grupo_crescimento = userGC;
       }
 
-      const { error: profileError } = await supabase
-        .from('users')
+      const { error: profileError } = await (supabase
+        .from('users') as any)
         .update(updateData)
         .eq('id', authResult.user.id);
 

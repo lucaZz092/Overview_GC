@@ -78,7 +78,7 @@ export const MeusRelatorios: React.FC<{ onBack: () => void }> = ({ onBack }) => 
       // Para cada co-líder, buscar seus encontros
       const coLeadersWithStats: CoLeaderStats[] = [];
 
-      for (const coLeader of coLeaders) {
+      for (const coLeader of coLeaders as any[]) {
         const { data: meetings, error: meetingsError } = await supabase
           .from('meetings')
           .select(`
@@ -93,7 +93,7 @@ export const MeusRelatorios: React.FC<{ onBack: () => void }> = ({ onBack }) => 
           continue;
         }
 
-        const meetingsWithUser: MeetingWithUser[] = (meetings || []).map(meeting => ({
+        const meetingsWithUser: MeetingWithUser[] = (meetings || []).map((meeting: any) => ({
           ...meeting,
           user_name: coLeader.name,
           user_email: coLeader.email,

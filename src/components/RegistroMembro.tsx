@@ -77,8 +77,7 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
 
       console.log('🔍 Dados do membro a serem inseridos:', memberData);
 
-      const { data, error } = await supabase
-        .from('members')
+      const { data, error } = await (supabase.from('members') as any)
         .insert([memberData])
         .select();
 

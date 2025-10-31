@@ -157,8 +157,8 @@ export const MembrosRegistrados: React.FC<MembrosRegistradosProps> = ({ onBack }
     try {
       const newStatus = !member.is_active;
       
-      const { error } = await supabase
-        .from('members')
+      const { error } = await (supabase
+        .from('members') as any)
         .update({ is_active: newStatus })
         .eq('id', member.id);
 
