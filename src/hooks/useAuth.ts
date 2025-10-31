@@ -18,7 +18,8 @@ export const useAuth = () => {
         
         if (error) {
           console.error('❌ useAuth: Erro ao buscar sessão:', error)
-          throw new Error(`Erro ao buscar sessão: ${error.message}`)
+          setLoading(false)
+          return
         }
         
         console.log('✅ useAuth: Sessão obtida:', session ? 'Usuário logado' : 'Sem usuário')
@@ -28,7 +29,7 @@ export const useAuth = () => {
       } catch (err) {
         console.error('❌ useAuth: Erro crítico ao inicializar:', err)
         setLoading(false)
-        throw err
+        // Não fazer throw para não quebrar a aplicação
       }
     }
 

@@ -20,22 +20,17 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   console.log('🏗️ AuthProvider: Renderizando...');
   
-  try {
-    const auth = useAuth();
-    console.log('✅ AuthProvider: useAuth retornou:', { 
-      hasUser: !!auth.user, 
-      loading: auth.loading 
-    });
+  const auth = useAuth();
+  console.log('✅ AuthProvider: useAuth retornou:', { 
+    hasUser: !!auth.user, 
+    loading: auth.loading 
+  });
 
-    return (
-      <AuthContext.Provider value={auth}>
-        {children}
-      </AuthContext.Provider>
-    );
-  } catch (error) {
-    console.error('❌ AuthProvider: Erro ao inicializar:', error);
-    throw new Error(`AuthProvider falhou: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-  }
+  return (
+    <AuthContext.Provider value={auth}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuthContext = () => {
