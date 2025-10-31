@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { Footer } from "@/components/Footer";
 
 interface Member {
   id: string;
@@ -301,6 +302,7 @@ export const MembrosRegistrados: React.FC<MembrosRegistradosProps> = ({ onBack }
         onClose={() => setSelectedMember(null)}
         onToggleStatus={handleToggleStatus}
       />
+      <Footer />
     </div>
   );
 }

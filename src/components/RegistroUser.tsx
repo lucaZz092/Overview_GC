@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Users } from "lucide-react";
+import { Footer } from "@/components/Footer";
 
 interface RegistroProps {
   onRegister: (userType: string) => void;
@@ -218,6 +219,7 @@ export function RegistroUser({ onRegister }: RegistroProps) {
             </form>
           </CardContent>
         </Card>
+        <Footer />
       </div>
     </div>
   );

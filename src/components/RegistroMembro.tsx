@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { Footer } from "@/components/Footer";
 
 interface RegistroMembroProps {
   onBack: () => void;
@@ -291,6 +292,7 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
             </CardContent>
           </Card>
         </div>
+        <Footer />
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, MapPin, Users, Clock, FileText, Trash2, AlertTrian
 import { supabase } from '@/lib/supabase';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { Footer } from '@/components/Footer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -336,6 +337,7 @@ export const EncontrosRegistrados: React.FC<EncontrosRegistradosProps> = ({ onBa
           </Card>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

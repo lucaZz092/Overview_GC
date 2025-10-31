@@ -7,6 +7,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
+import { Footer } from "@/components/Footer";
 
 interface MeetingWithUser {
   id: string;
@@ -404,6 +405,7 @@ export const MeusRelatorios: React.FC<{ onBack: () => void }> = ({ onBack }) => 
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

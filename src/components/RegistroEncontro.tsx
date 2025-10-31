@@ -9,6 +9,7 @@ import { Calendar, ArrowLeft, Users, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { Footer } from "@/components/Footer";
 
 interface RegistroEncontroProps {
   onBack: () => void;
@@ -249,6 +250,7 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
             </CardContent>
           </Card>
         </div>
+        <Footer />
       </div>
     </div>
   );

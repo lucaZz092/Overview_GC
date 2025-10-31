@@ -7,6 +7,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
+import { Footer } from "@/components/Footer";
 
 interface DashboardProps {
   userType: string;
@@ -789,6 +790,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
           </Card>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import BlurText from "@/components/ui/blur-text";
 import TextType from "@/components/ui/text-type";
+import { Footer } from "@/components/Footer";
 
 
 interface LoginProps {
@@ -207,7 +208,7 @@ export function Login({ onLogin }: LoginProps) {
             className="text-4xl font-bold text-white mb-2 justify-center"
           />
           <TextType 
-            text={["Sistema de Gestão", "Grupos de Crescimento", "Bem-vindo!"]}
+            text={["Sistema de Gestão de Grupos de Crescimento", "Bem-vindo!"]}
             typingSpeed={75}
             pauseDuration={1500}
             showCursor={true}
@@ -372,6 +373,7 @@ export function Login({ onLogin }: LoginProps) {
             )}
           </CardContent>
         </Card>
+        <Footer />
       </div>
     </div>
   );
