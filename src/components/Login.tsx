@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
+import BlurText from "@/components/ui/blur-text";
 
 
 interface LoginProps {
@@ -197,9 +198,13 @@ export function Login({ onLogin }: LoginProps) {
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            GC Overview
-          </h1>
+          <BlurText
+            text="GC Overview"
+            delay={100}
+            animateBy="words"
+            direction="top"
+            className="text-4xl font-bold text-white mb-2 justify-center"
+          />
           <p className="text-white/80">
             Sistema de Gestão de Grupos de Crescimento
           </p>
