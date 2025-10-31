@@ -49,7 +49,7 @@ export function Login({ onLogin }: LoginProps) {
         .eq('id', user.id)
         .single();
 
-      if (error) {
+      if (error || !userData) {
         console.error('Erro ao buscar role do usuário:', error);
       }
 

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
 // Fallback values - replace with your actual values
 const FALLBACK_URL = 'https://ocgmsuenqyfebkrqcmjn.supabase.co'
@@ -19,11 +20,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(errorMsg)
 }
 
-let supabase: ReturnType<typeof createClient>
+let supabase: ReturnType<typeof createClient<Database>>
 
 try {
   console.log('🚀 Criando cliente Supabase...')
-  supabase = createClient(supabaseUrl, supabaseAnonKey)
+  supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
   console.log('✅ Cliente Supabase criado com sucesso!')
 } catch (error) {
   console.error('❌ Erro ao criar cliente Supabase:', error)
