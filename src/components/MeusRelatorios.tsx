@@ -68,12 +68,12 @@ export const MeusRelatorios: React.FC<{ onBack: () => void }> = ({ onBack }) => 
       }
 
       if (!coLeaders || coLeaders.length === 0) {
-        console.log('ℹ️ Nenhum co-líder encontrado no GC:', profile.grupo_crescimento);
+
         setCoLeadersStats([]);
         return;
       }
 
-      console.log('✅ Co-líderes encontrados:', coLeaders);
+
 
       // Para cada co-líder, buscar seus encontros
       const coLeadersWithStats: CoLeaderStats[] = [];
@@ -112,7 +112,7 @@ export const MeusRelatorios: React.FC<{ onBack: () => void }> = ({ onBack }) => 
         });
       }
 
-      console.log('✅ Estatísticas dos co-líderes:', coLeadersWithStats);
+
       setCoLeadersStats(coLeadersWithStats);
 
     } catch (error) {

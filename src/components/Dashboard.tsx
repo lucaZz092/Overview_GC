@@ -17,7 +17,7 @@ interface DashboardProps {
 
 export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: DashboardProps) {
   const { user } = useAuthContext();
-  const { profile, loading, isAdmin, isPastor, isLeader } = useUserProfile();
+  const { profile, loading: profileLoading, error: profileError } = useUserProfile();
   
   // Estados para dados reais
   const [meetingsStats, setMeetingsStats] = useState({
@@ -33,7 +33,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
   // Hook para buscar dados reais
   useEffect(() => {
     const fetchRealData = async () => {
-      if (!user) return;
+      if (!user || !effectiveRole) return;
 
       try {
         // Calcular início do mês atual
@@ -106,9 +106,8 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
       }
     };
 
-    if (user && effectiveRole) {
-      fetchRealData();
-    }
+    fetchRealData();
+    
   }, [user, effectiveRole]);
 
   // Função para formatar o nome do GC para exibição
@@ -216,26 +215,34 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
     );
   };
 
-  // Debug para entender o que está acontecendo
-  console.log('🔍 Dashboard Debug:');
-  console.log('  User Email:', user?.email);
-  console.log('  UserType:', userType);
-  console.log('  Profile Role:', profile?.role);
-  console.log('  Profile GC:', profile?.grupo_crescimento);
-  console.log('  Loading:', loading);
-  console.log('  Effective Role:', effectiveRole);
-  console.log('  Full Profile:', profile);
-
   // Se ainda estiver carregando e não tiver dados, mostrar loading
-  if (loading) {
+  if (profileLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center">
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Carregando Dashboard...</p>
-          <p className="text-sm mt-2">User: {user?.email}</p>
-          <p className="text-sm">UserType: {userType}</p>
+          <p>Carregando Perfil...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Se deu erro ao carregar o perfil
+  if (profileError) {
+    return (
+      <div className="min-h-screen bg-red-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-lg shadow-lg border-red-500">
+          <CardHeader>
+            <CardTitle className="text-red-700">🚨 Erro ao Carregar Perfil</CardTitle>
+            <CardDescription>Não foi possível carregar as informações do seu perfil. Tente recarregar a página.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600"><strong>Detalhes do erro:</strong> {profileError}</p>
+            <Button onClick={() => window.location.reload()} className="mt-4 w-full">
+              Recarregar Página
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -266,20 +273,14 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <Button 
-                  onClick={() => {
-                    console.log('🎭 Admin escolheu: pastor');
-                    onRoleSelect?.('pastor');
-                  }}
+                  onClick={() => onRoleSelect('pastor')}
                   className="w-full bg-gradient-primary text-lg py-6"
                 >
                   🙏 Pastor
                 </Button>
                 
                 <Button 
-                  onClick={() => {
-                    console.log('🎭 Admin escolheu: leader');
-                    onRoleSelect?.('leader');
-                  }}
+                  onClick={() => onRoleSelect('leader')}
                   className="w-full bg-gradient-primary text-lg py-6"
                   variant="outline"
                 >
@@ -287,10 +288,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
                 </Button>
                 
                 <Button 
-                  onClick={() => {
-                    console.log('🎭 Admin escolheu: co_leader');
-                    onRoleSelect?.('co_leader');
-                  }}
+                  onClick={() => onRoleSelect('co_leader')}
                   className="w-full bg-gradient-primary text-lg py-6"
                   variant="outline"
                 >
@@ -343,7 +341,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
   }
 
   const getWelcomeMessage = () => {
-    if (loading) return "Dashboard";
+    if (profileLoading) return "Dashboard";
     
     switch (effectiveRole) {
       case "admin":
@@ -360,7 +358,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
   };
 
   const getUserBadge = () => {
-    if (loading) return null;
+    if (profileLoading) return null;
     
     const roleToShow = effectiveRole;
     const isActingAsAdmin = profile?.role === 'admin';

@@ -75,7 +75,7 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
         is_active: true
       };
 
-      console.log('🔍 Dados do membro a serem inseridos:', memberData);
+
 
       const { data, error } = await (supabase.from('members') as any)
         .insert([memberData])
@@ -91,7 +91,7 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
         return;
       }
 
-      console.log('✅ Membro cadastrado com sucesso:', data);
+
 
       toast({
         title: "Membro cadastrado!",

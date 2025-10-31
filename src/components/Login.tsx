@@ -57,35 +57,13 @@ export function Login({ onLogin }: LoginProps) {
 
       const userRole = userData.role || 'co_leader';
       
-      console.log('🔍 Login Debug:');
-      console.log('  User Role from DB:', userRole);
-      console.log('  Is Admin?', userRole === 'admin');
-      console.log('  UserData:', userData);
-      
-      // FORÇAR exibição da tela de admin para teste
-      if (user?.email === 'lucacampeao2013@gmail.com') {
-        console.log('🔴 FORÇANDO tela de admin para teste');
-        setIsAdmin(true);
-        setShowRoleSelection(true);
-        setLoading(false);
-        return;
-      }
-      
       if (userRole === 'admin') {
-        console.log('✅ Usuário é admin - mostrando seleção de papel');
-        setIsAdmin(true);
         setShowRoleSelection(true);
-        setLoading(false);
         return;
       }
 
-      console.log('📝 Login normal - não é admin');
-      toast({
-        title: "Login realizado!",
-        description: `Bem-vindo, ${user?.email}!`,
-      });
-      
-      onLogin(userRole);
+      // Login normal para não-admins
+      onLogin(userRole || 'co_leader');
     } catch (error: any) {
       console.error('Login error:', error);
       
@@ -122,7 +100,7 @@ export function Login({ onLogin }: LoginProps) {
       return;
     }
 
-    console.log('🎭 Admin escolheu papel:', selectedRole);
+
 
     toast({
       title: "Login realizado!",
@@ -179,13 +157,6 @@ export function Login({ onLogin }: LoginProps) {
     }
   };
 
-  // Debug do estado da tela
-  console.log('🖥️ Login Screen State:', {
-    showRoleSelection,
-    isAdmin,
-    selectedRole,
-    loading
-  });
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
