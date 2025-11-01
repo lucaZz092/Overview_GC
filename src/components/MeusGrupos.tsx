@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Users, MapPin, UserCheck, Home } from "lucide-react";
+import { ArrowLeft, Users, MapPin, UserCheck, Home, Calendar, TrendingUp, BarChart3 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -13,6 +13,17 @@ interface CoLeader {
   id: string;
   name: string;
   email: string | null;
+  meetings_count: number;
+  last_meeting_date: string | null;
+}
+
+interface GroupActivity {
+  total_meetings: number;
+  meetings_this_month: number;
+  meetings_this_week: number;
+  average_attendance: number;
+  total_attendance: number;
+  active_members: number;
 }
 
 interface GroupInfo {
@@ -21,6 +32,7 @@ interface GroupInfo {
   location: string | null;
   members_count: number;
   co_leaders: CoLeader[];
+  activity: GroupActivity;
 }
 
 interface MeusGruposProps {
@@ -69,7 +81,7 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
       }
 
       // Buscar co-líderes do mesmo GC
-      const { data: coLeadersData, error: coLeadersError } = await supabase
+      const { data: coLeadersProfiles, error: coLeadersError } = await supabase
         .from('profiles')
         .select('id, name, email')
         .eq('grupo_crescimento', profile.grupo_crescimento)
@@ -86,8 +98,51 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
 
       if (membersError) throw membersError;
 
-      // Buscar localização do GC (pode vir do perfil do líder ou de uma tabela específica)
-      // Por enquanto, vamos usar a localização padrão baseada no nome do GC
+      // Buscar todos os encontros do GC
+      const { data: allMeetings, error: meetingsError } = await supabase
+        .from('meetings')
+        .select('id, date, attendance_count, user_id')
+        .eq('gc_code', profile.grupo_crescimento)
+        .order('date', { ascending: false });
+
+      if (meetingsError) throw meetingsError;
+
+      // Calcular estatísticas de atividade
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const firstDayOfWeek = new Date(now);
+      firstDayOfWeek.setDate(now.getDate() - now.getDay());
+
+      const meetingsThisMonth = allMeetings?.filter(m => 
+        new Date(m.date) >= firstDayOfMonth
+      ) || [];
+
+      const meetingsThisWeek = allMeetings?.filter(m => 
+        new Date(m.date) >= firstDayOfWeek
+      ) || [];
+
+      // Calcular média de presença
+      const totalAttendance = allMeetings?.reduce((sum, m) => sum + (m.attendance_count || 0), 0) || 0;
+      const averageAttendance = allMeetings?.length ? Math.round(totalAttendance / allMeetings.length) : 0;
+
+      // Buscar atividade de cada co-líder
+      const coLeadersWithActivity: CoLeader[] = await Promise.all(
+        (coLeadersProfiles || []).map(async (coLeader) => {
+          const { data: leaderMeetings } = await supabase
+            .from('meetings')
+            .select('id, date')
+            .eq('user_id', coLeader.id)
+            .order('date', { ascending: false });
+
+          return {
+            ...coLeader,
+            meetings_count: leaderMeetings?.length || 0,
+            last_meeting_date: leaderMeetings?.[0]?.date || null,
+          };
+        })
+      );
+
+      // Buscar localização do GC
       const location = gcNames[profile.grupo_crescimento]?.split(' - ')[1] || 'Não definida';
 
       setGroupInfo({
@@ -95,7 +150,15 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
         gc_name: gcNames[profile.grupo_crescimento] || profile.grupo_crescimento,
         location: location,
         members_count: membersData?.length || 0,
-        co_leaders: (coLeadersData as CoLeader[]) || [],
+        co_leaders: coLeadersWithActivity,
+        activity: {
+          total_meetings: allMeetings?.length || 0,
+          meetings_this_month: meetingsThisMonth.length,
+          meetings_this_week: meetingsThisWeek.length,
+          average_attendance: averageAttendance,
+          total_attendance: totalAttendance,
+          active_members: membersData?.length || 0,
+        }
       });
 
     } catch (error: any) {
@@ -260,9 +323,19 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
                               {coLeader.email}
                             </p>
                           )}
-                          <Badge variant="outline" className="mt-2">
-                            Co-líder
-                          </Badge>
+                          <div className="mt-3 space-y-1">
+                            <Badge variant="outline">
+                              Co-líder
+                            </Badge>
+                            <div className="text-xs text-gray-500 mt-2">
+                              <p>📅 {coLeader.meetings_count} encontro(s) registrado(s)</p>
+                              {coLeader.last_meeting_date && (
+                                <p className="mt-1">
+                                  Último: {new Date(coLeader.last_meeting_date).toLocaleDateString('pt-BR')}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -270,6 +343,126 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
                 ))}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Card de Atividade do Grupo */}
+        <Card className="shadow-strong border-2 border-orange-200">
+          <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-orange-600" />
+              Atividade do Grupo
+            </CardTitle>
+            <CardDescription>
+              Dados reais preenchidos pelos co-líderes
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {/* Total de Encontros */}
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-blue-700 font-medium mb-1">Total de Encontros</p>
+                      <p className="text-3xl font-bold text-blue-900">{groupInfo.activity.total_meetings}</p>
+                    </div>
+                    <Calendar className="h-10 w-10 text-blue-300" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Encontros este Mês */}
+              <Card className="bg-green-50 border-green-200">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-green-700 font-medium mb-1">Este Mês</p>
+                      <p className="text-3xl font-bold text-green-900">{groupInfo.activity.meetings_this_month}</p>
+                    </div>
+                    <Calendar className="h-10 w-10 text-green-300" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Encontros esta Semana */}
+              <Card className="bg-purple-50 border-purple-200">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-purple-700 font-medium mb-1">Esta Semana</p>
+                      <p className="text-3xl font-bold text-purple-900">{groupInfo.activity.meetings_this_week}</p>
+                    </div>
+                    <Calendar className="h-10 w-10 text-purple-300" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Média de Presença */}
+              <Card className="bg-orange-50 border-orange-200">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-orange-700 font-medium mb-1">Média de Presença</p>
+                      <p className="text-3xl font-bold text-orange-900">{groupInfo.activity.average_attendance}</p>
+                    </div>
+                    <BarChart3 className="h-10 w-10 text-orange-300" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Total de Presenças */}
+              <Card className="bg-teal-50 border-teal-200">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-teal-700 font-medium mb-1">Total de Presenças</p>
+                      <p className="text-3xl font-bold text-teal-900">{groupInfo.activity.total_attendance}</p>
+                    </div>
+                    <Users className="h-10 w-10 text-teal-300" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Membros Ativos */}
+              <Card className="bg-indigo-50 border-indigo-200">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-indigo-700 font-medium mb-1">Membros Ativos</p>
+                      <p className="text-3xl font-bold text-indigo-900">{groupInfo.activity.active_members}</p>
+                    </div>
+                    <Users className="h-10 w-10 text-indigo-300" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Análise de Performance */}
+            <div className="bg-gradient-to-r from-orange-100 to-yellow-100 p-4 rounded-lg">
+              <h4 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Análise de Performance
+              </h4>
+              <div className="grid md:grid-cols-2 gap-3 text-sm">
+                <div className="bg-white/70 p-3 rounded">
+                  <p className="text-gray-600">Taxa de Frequência:</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {groupInfo.activity.active_members > 0 
+                      ? Math.round((groupInfo.activity.average_attendance / groupInfo.activity.active_members) * 100)
+                      : 0}%
+                  </p>
+                </div>
+                <div className="bg-white/70 p-3 rounded">
+                  <p className="text-gray-600">Média por Semana:</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {groupInfo.activity.total_meetings > 0 
+                      ? (groupInfo.activity.total_meetings / 4).toFixed(1)
+                      : 0} encontros
+                  </p>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
