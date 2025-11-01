@@ -16,6 +16,17 @@ interface DashboardProps {
   onRoleSelect?: (role: string) => void;
 }
 
+interface LeaderActivityEntry {
+  id: string;
+  title: string;
+  date: string;
+  location: string | null;
+  attendance_count: number | null;
+  user_id: string;
+  user_name: string;
+  gc_code: string | null;
+}
+
 export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: DashboardProps) {
   const { user } = useAuthContext();
   const { profile, loading: profileLoading, error: profileError } = useUserProfile();
@@ -27,6 +38,9 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
     loading: true
   });
   const [membersCount, setMembersCount] = useState(0);
+  const [leaderActivities, setLeaderActivities] = useState<LeaderActivityEntry[]>([]);
+  const [leaderActivitiesLoading, setLeaderActivitiesLoading] = useState(false);
+  const [leaderActivitiesError, setLeaderActivitiesError] = useState<string | null>(null);
 
   // Usar o userType escolhido pelo admin, ou o role do perfil se não for admin
   const effectiveRole = (profile?.role === 'admin' && userType) ? userType : profile?.role;
@@ -34,64 +48,127 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
   // Hook para buscar dados reais
   useEffect(() => {
     const fetchRealData = async () => {
-      if (!user || !effectiveRole) return;
+      if (!user || !effectiveRole) {
+        return;
+      }
 
       try {
-        // Calcular início do mês atual
+        setMeetingsStats((prev) => ({ ...prev, loading: true }));
+
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        
-        // Query base para encontros
+
         let meetingsQuery = supabase
           .from('meetings')
-          .select('id, date, created_at');
+          .select('id, date, created_at, user_id');
 
-        // Query base para membros
         let membersQuery = supabase
           .from('members')
           .select('id', { count: 'exact' });
 
-        // Filtrar por usuário específico para co-líderes e líderes
-        if (effectiveRole === 'co_leader' || effectiveRole === 'leader') {
-          meetingsQuery = meetingsQuery.eq('user_id', user.id);
-          membersQuery = membersQuery.eq('user_id', user.id);
-        }
-        // Para pastores e admins, mostrar dados de todos
+        const relevantUserIdsSet = new Set<string>();
+        const userNameMap = new Map<string, string>();
+        const userGroupMap = new Map<string, string | null>();
 
-        // Buscar encontros (executar queries em paralelo)
+        relevantUserIdsSet.add(user.id);
+        userNameMap.set(user.id, profile?.name || 'Você');
+        userGroupMap.set(user.id, profile?.grupo_crescimento || null);
+
+        if (effectiveRole === 'leader') {
+          setLeaderActivitiesLoading(true);
+          setLeaderActivitiesError(null);
+
+          if (profile?.grupo_crescimento) {
+            const { data: relatedProfiles, error: relatedProfilesError } = await supabase
+              .from('profiles')
+              .select('id, name, grupo_crescimento, role')
+              .eq('grupo_crescimento', profile.grupo_crescimento);
+
+            if (relatedProfilesError) {
+              throw relatedProfilesError;
+            }
+
+            (relatedProfiles || []).forEach((person) => {
+              relevantUserIdsSet.add(person.id);
+              userNameMap.set(person.id, person.name || 'Co-líder');
+              userGroupMap.set(person.id, person.grupo_crescimento);
+            });
+          }
+
+          const relevantUserIds = Array.from(relevantUserIdsSet);
+
+          meetingsQuery = meetingsQuery.in('user_id', relevantUserIds);
+
+          if (profile?.grupo_crescimento) {
+            membersQuery = membersQuery.in('gc_code', [profile.grupo_crescimento]);
+          } else {
+            membersQuery = membersQuery.eq('user_id', user.id);
+          }
+
+          const { data: recentMeetings, error: recentMeetingsError } = await supabase
+            .from('meetings')
+            .select('id, title, date, location, attendance_count, user_id')
+            .in('user_id', relevantUserIds)
+            .order('date', { ascending: false })
+            .limit(8);
+
+          if (recentMeetingsError) {
+            throw recentMeetingsError;
+          }
+
+          const formattedActivities: LeaderActivityEntry[] = (recentMeetings || []).map((meeting) => ({
+            id: meeting.id,
+            title: meeting.title || 'Encontro registrado',
+            date: meeting.date,
+            location: meeting.location ?? null,
+            attendance_count: meeting.attendance_count ?? null,
+            user_id: meeting.user_id,
+            user_name: userNameMap.get(meeting.user_id) || 'Co-líder',
+            gc_code: userGroupMap.get(meeting.user_id) ?? null,
+          }));
+
+          setLeaderActivities(formattedActivities);
+        } else {
+          if (effectiveRole === 'co_leader') {
+            meetingsQuery = meetingsQuery.eq('user_id', user.id);
+            membersQuery = membersQuery.eq('user_id', user.id);
+          }
+          setLeaderActivities([]);
+          setLeaderActivitiesError(null);
+          setLeaderActivitiesLoading(false);
+        }
+
         const [meetingsResult, membersResult] = await Promise.allSettled([
           meetingsQuery,
-          membersQuery
+          membersQuery,
         ]);
 
-        // Processar resultado dos encontros
         if (meetingsResult.status === 'fulfilled') {
           const { data: allMeetings, error: meetingsError } = meetingsResult.value;
-          
+
           if (meetingsError) {
             console.error('Erro ao buscar encontros:', meetingsError);
-            setMeetingsStats(prev => ({ ...prev, loading: false }));
+            setMeetingsStats((prev) => ({ ...prev, loading: false }));
           } else {
             const total = allMeetings?.length || 0;
-            const thisMonth = (allMeetings as any[] || []).filter((meeting: any) => 
+            const thisMonth = (allMeetings as any[] || []).filter((meeting: any) =>
               new Date(meeting.date) >= startOfMonth
             ).length || 0;
 
             setMeetingsStats({
               thisMonth,
               total,
-              loading: false
+              loading: false,
             });
           }
         } else {
           console.error('Erro ao buscar encontros:', meetingsResult.reason);
-          setMeetingsStats(prev => ({ ...prev, loading: false }));
+          setMeetingsStats((prev) => ({ ...prev, loading: false }));
         }
 
-        // Processar resultado dos membros
         if (membersResult.status === 'fulfilled') {
           const { count: membersTotal, error: membersError } = membersResult.value;
-          
+
           if (membersError) {
             console.error('Erro ao buscar membros:', membersError);
           } else {
@@ -100,16 +177,23 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
         } else {
           console.error('Erro ao buscar membros:', membersResult.reason);
         }
-
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erro ao buscar dados do dashboard:', error);
-        setMeetingsStats(prev => ({ ...prev, loading: false }));
+        setMeetingsStats((prev) => ({ ...prev, loading: false }));
+
+        if (effectiveRole === 'leader') {
+          setLeaderActivities([]);
+          setLeaderActivitiesError(error.message || 'Não foi possível carregar os encontros.');
+        }
+      } finally {
+        if (effectiveRole === 'leader') {
+          setLeaderActivitiesLoading(false);
+        }
       }
     };
 
     fetchRealData();
-    
-  }, [user, effectiveRole]);
+  }, [user, effectiveRole, profile?.grupo_crescimento, profile?.name]);
 
   // Função para formatar o nome do GC para exibição
   const formatGCName = (gcCode: string | undefined) => {
@@ -134,6 +218,50 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
     };
     
     return gcNames[gcCode] || gcCode;
+  };
+
+  const formatMeetingDateTime = (isoDate: string) => {
+    try {
+      return new Intl.DateTimeFormat('pt-BR', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(isoDate));
+    } catch (error) {
+      console.error('Erro ao formatar data de encontro:', error);
+      return 'Data indisponível';
+    }
+  };
+
+  const getRelativeTimeLabel = (isoDate: string) => {
+    const eventDate = new Date(isoDate);
+    const now = new Date();
+    const diffMs = now.getTime() - eventDate.getTime();
+
+    if (Number.isNaN(diffMs)) {
+      return '';
+    }
+
+    const diffMinutes = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMinutes < 60) {
+      return `Há ${diffMinutes} minuto${diffMinutes !== 1 ? 's' : ''}`;
+    }
+
+    if (diffHours < 24) {
+      return `Há ${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
+    }
+
+    if (diffDays === 1) {
+      return 'Ontem';
+    }
+
+    if (diffDays < 7) {
+      return `${diffDays} dias atrás`;
+    }
+
+    return eventDate.toLocaleDateString('pt-BR');
   };
 
   // Componente de dropdown do usuário
@@ -747,37 +875,107 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
         )}
 
         {effectiveRole === "leader" && (
-          <Card className="mt-8 shadow-soft">
-            <CardHeader>
-              <CardTitle>Atividade dos Seus Grupos</CardTitle>
-              <CardDescription>
-                Últimas ações nos grupos sob sua liderança
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-accent/50">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Encontro registrado - GC Vila Nova</p>
-                    <p className="text-xs text-muted-foreground">Há 2 horas</p>
-                  </div>
+          <Card className="mt-8 overflow-hidden shadow-strong border border-primary/10">
+            <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-primary">
+                    <Calendar className="h-5 w-5" />
+                    Encontros Registrados
+                  </CardTitle>
+                  <CardDescription className="text-primary/70">
+                    Histórico recente dos encontros registrados por você e seus co-líderes
+                  </CardDescription>
                 </div>
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-accent/50">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Novo membro - João Silva (GC Jardins)</p>
-                    <p className="text-xs text-muted-foreground">Ontem</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 p-3 rounded-lg bg-accent/50">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Relatório semanal - GC Centro Norte</p>
-                    <p className="text-xs text-muted-foreground">2 dias atrás</p>
-                  </div>
-                </div>
+                <Badge variant="secondary" className="bg-white/80 text-primary border-primary/40">
+                  {leaderActivitiesLoading ? 'Carregando...' : `${leaderActivities.length} registro${leaderActivities.length === 1 ? '' : 's'}`}
+                </Badge>
               </div>
+            </CardHeader>
+            <CardContent className="bg-white/60 backdrop-blur-sm p-6">
+              {leaderActivitiesLoading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, index) => (
+                    <div
+                      key={index}
+                      className="h-24 rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : leaderActivitiesError ? (
+                <div className="rounded-xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-600">
+                  {leaderActivitiesError}
+                </div>
+              ) : leaderActivities.length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <Calendar className="h-7 w-7 text-primary" />
+                  </div>
+                  <p className="text-base font-medium">Nenhum encontro registrado ainda.</p>
+                  <p className="mt-2 text-sm">
+                    Utilize a opção <strong>“Registrar Encontro”</strong> para documentar as reuniões e acompanhar todo o histórico aqui.
+                  </p>
+                  <Button variant="outline" className="mt-4" onClick={() => onNavigate("registro-encontro")}>
+                    Registrar novo encontro
+                  </Button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <div className="absolute left-5 top-1 bottom-1 w-px bg-gradient-to-b from-primary/30 via-primary/20 to-transparent" />
+                  <div className="space-y-6">
+                    {leaderActivities.map((activity, index) => (
+                      <div key={activity.id} className="relative pl-12">
+                        <span className="absolute left-0 top-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-primary text-white shadow-lg">
+                          <Calendar className="h-4 w-4" />
+                        </span>
+                        <div className="rounded-xl border border-primary/10 bg-gradient-to-r from-white via-white to-primary/5 p-5 shadow-soft transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <p className="text-base font-semibold text-gray-900">{activity.title}</p>
+                              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                                <span className="flex items-center gap-2 rounded-full bg-primary/5 px-2 py-1">
+                                  <Calendar className="h-4 w-4 text-primary" />
+                                  {formatMeetingDateTime(activity.date)}
+                                </span>
+                                {activity.location && (
+                                  <span className="flex items-center gap-2 rounded-full bg-primary/5 px-2 py-1">
+                                    <MapPin className="h-4 w-4 text-primary" />
+                                    {activity.location}
+                                  </span>
+                                )}
+                                {typeof activity.attendance_count === 'number' && (
+                                  <span className="flex items-center gap-2 rounded-full bg-primary/5 px-2 py-1">
+                                    <Users className="h-4 w-4 text-primary" />
+                                    {activity.attendance_count} participante{activity.attendance_count === 1 ? '' : 's'}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="whitespace-nowrap bg-white/80 text-primary border-primary/30">
+                              {getRelativeTimeLabel(activity.date)}
+                            </Badge>
+                          </div>
+                          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <User className="h-3.5 w-3.5 text-primary" />
+                              Responsável: {activity.user_name}
+                            </span>
+                            {activity.gc_code && (
+                              <span className="flex items-center gap-1">
+                                <Users className="h-3.5 w-3.5 text-primary" />
+                                GC: {formatGCName(activity.gc_code)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {index !== leaderActivities.length - 1 && (
+                          <div className="absolute left-5 top-[calc(100%+4px)] h-4 w-px bg-primary/20" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
