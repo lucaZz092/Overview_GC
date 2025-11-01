@@ -200,6 +200,9 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
       // Ordenar por data mais recente
       recentActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
+      console.log('📊 Atividades Recentes:', recentActivities.slice(0, 10));
+      console.log('📊 Total de atividades:', recentActivities.length);
+
       setGroupInfo({
         gc_code: profile.grupo_crescimento,
         gc_name: gcNames[profile.grupo_crescimento] || profile.grupo_crescimento,
@@ -335,6 +338,104 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
                 </CardContent>
               </Card>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Card de Atividades Recentes */}
+        <Card className="shadow-soft border-2 border-yellow-200">
+          <CardHeader className="bg-gradient-to-r from-yellow-50 to-orange-50">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-orange-600" />
+              Atividade dos Seus Grupos
+            </CardTitle>
+            <CardDescription>
+              Últimas ações nos grupos sob sua liderança
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {groupInfo.recent_activities.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>Nenhuma atividade recente registrada.</p>
+                <p className="text-sm mt-2">As atividades aparecerão aqui quando os co-líderes registrarem encontros ou novos membros.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {groupInfo.recent_activities.map((activity) => {
+                  const getTimeAgo = (date: Date) => {
+                    const now = new Date();
+                    const diffMs = now.getTime() - date.getTime();
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
+
+                    if (diffMins < 60) return `Há ${diffMins} minuto${diffMins !== 1 ? 's' : ''}`;
+                    if (diffHours < 24) return `Há ${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
+                    if (diffDays === 1) return 'Ontem';
+                    if (diffDays < 7) return `${diffDays} dias atrás`;
+                    return date.toLocaleDateString('pt-BR');
+                  };
+
+                  const getIcon = () => {
+                    switch (activity.type) {
+                      case 'meeting':
+                        return <Calendar className="h-5 w-5 text-blue-600" />;
+                      case 'member':
+                        return <Users className="h-5 w-5 text-green-600" />;
+                      case 'report':
+                        return <BarChart3 className="h-5 w-5 text-purple-600" />;
+                      default:
+                        return <Calendar className="h-5 w-5 text-gray-600" />;
+                    }
+                  };
+
+                  const getBgColor = () => {
+                    switch (activity.type) {
+                      case 'meeting':
+                        return 'bg-blue-50 border-blue-200';
+                      case 'member':
+                        return 'bg-green-50 border-green-200';
+                      case 'report':
+                        return 'bg-purple-50 border-purple-200';
+                      default:
+                        return 'bg-gray-50 border-gray-200';
+                    }
+                  };
+
+                  return (
+                    <Card key={activity.id} className={`${getBgColor()} border hover:shadow-md transition-shadow`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1">
+                            {getIcon()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-900">
+                                  {activity.description}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {activity.gc_name}
+                                </p>
+                                {activity.user_name && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Por: {activity.user_name}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge variant="outline" className="text-xs whitespace-nowrap">
+                                {getTimeAgo(activity.timestamp)}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
