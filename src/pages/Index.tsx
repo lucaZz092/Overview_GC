@@ -6,6 +6,7 @@ import { RegistroMembro } from "@/components/RegistroMembro";
 import { MembrosRegistrados } from "@/components/MembrosRegistrados";
 import { MeusRelatorios } from "@/components/MeusRelatorios";
 import { MeusGrupos } from "@/components/MeusGrupos";
+import { ProximosEncontros } from "@/components/ProximosEncontros";
 import EncontrosRegistrados from "@/components/EncontrosRegistrados";
 import { useAuthContext } from "@/contexts/AuthContext";
 
@@ -69,6 +70,8 @@ const Index = () => {
       return <MeusRelatorios onBack={handleBack} />;
     case "meus-grupos":
       return <MeusGrupos onBack={handleBack} />;
+    case "proximos-encontros":
+      return <ProximosEncontros onBack={handleBack} />;
     default:
       return (
         <Dashboard 
