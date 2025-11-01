@@ -26,6 +26,15 @@ interface GroupActivity {
   active_members: number;
 }
 
+interface RecentActivity {
+  id: string;
+  type: 'meeting' | 'member' | 'report';
+  description: string;
+  gc_name: string;
+  timestamp: Date;
+  user_name?: string;
+}
+
 interface GroupInfo {
   gc_code: string;
   gc_name: string;
@@ -33,6 +42,7 @@ interface GroupInfo {
   members_count: number;
   co_leaders: CoLeader[];
   activity: GroupActivity;
+  recent_activities: RecentActivity[];
 }
 
 interface MeusGruposProps {
@@ -103,7 +113,7 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
         .from('meetings')
         .select('id, date, attendance_count, user_id')
         .eq('gc_code', profile.grupo_crescimento)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false }) as { data: { id: string; date: string; attendance_count: number | null; user_id: string }[] | null; error: any };
 
       if (meetingsError) throw meetingsError;
 
@@ -127,12 +137,12 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
 
       // Buscar atividade de cada co-líder
       const coLeadersWithActivity: CoLeader[] = await Promise.all(
-        (coLeadersProfiles || []).map(async (coLeader) => {
+        (coLeadersProfiles || []).map(async (coLeader: any) => {
           const { data: leaderMeetings } = await supabase
             .from('meetings')
             .select('id, date')
             .eq('user_id', coLeader.id)
-            .order('date', { ascending: false });
+            .order('date', { ascending: false }) as { data: { id: string; date: string }[] | null };
 
           return {
             ...coLeader,
@@ -144,6 +154,51 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
 
       // Buscar localização do GC
       const location = gcNames[profile.grupo_crescimento]?.split(' - ')[1] || 'Não definida';
+
+      // Buscar atividades recentes (últimos 10 encontros e membros)
+      const recentActivities: RecentActivity[] = [];
+
+      // Adicionar encontros recentes
+      const recentMeetings = allMeetings?.slice(0, 5) || [];
+      for (const meeting of recentMeetings) {
+        const { data: userData } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', meeting.user_id)
+          .single() as { data: { name: string } | null };
+
+        recentActivities.push({
+          id: `meeting-${meeting.id}`,
+          type: 'meeting',
+          description: 'Encontro registrado',
+          gc_name: gcNames[profile.grupo_crescimento] || profile.grupo_crescimento,
+          timestamp: new Date(meeting.date),
+          user_name: userData?.name || 'Usuário',
+        });
+      }
+
+      // Buscar membros recentes
+      const { data: recentMembers } = await supabase
+        .from('members')
+        .select('id, name, created_at, gc_code')
+        .eq('gc_code', profile.grupo_crescimento)
+        .order('created_at', { ascending: false })
+        .limit(5) as { data: { id: string; name: string; created_at: string; gc_code: string }[] | null };
+
+      if (recentMembers) {
+        for (const member of recentMembers) {
+          recentActivities.push({
+            id: `member-${member.id}`,
+            type: 'member',
+            description: `Novo membro - ${member.name}`,
+            gc_name: gcNames[member.gc_code] || member.gc_code,
+            timestamp: new Date(member.created_at),
+          });
+        }
+      }
+
+      // Ordenar por data mais recente
+      recentActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
       setGroupInfo({
         gc_code: profile.grupo_crescimento,
@@ -158,7 +213,8 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
           average_attendance: averageAttendance,
           total_attendance: totalAttendance,
           active_members: membersData?.length || 0,
-        }
+        },
+        recent_activities: recentActivities.slice(0, 10), // Últimas 10 atividades
       });
 
     } catch (error: any) {
@@ -463,6 +519,103 @@ export function MeusGrupos({ onBack }: MeusGruposProps) {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Card de Atividades Recentes */}
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Atividade dos Seus Grupos
+            </CardTitle>
+            <CardDescription>
+              Últimas ações nos grupos sob sua liderança
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {groupInfo.recent_activities.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>Nenhuma atividade recente registrada.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {groupInfo.recent_activities.map((activity) => {
+                  const getTimeAgo = (date: Date) => {
+                    const now = new Date();
+                    const diffMs = now.getTime() - date.getTime();
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
+
+                    if (diffMins < 60) return `Há ${diffMins} minuto${diffMins !== 1 ? 's' : ''}`;
+                    if (diffHours < 24) return `Há ${diffHours} hora${diffHours !== 1 ? 's' : ''}`;
+                    if (diffDays === 1) return 'Ontem';
+                    if (diffDays < 7) return `${diffDays} dias atrás`;
+                    return date.toLocaleDateString('pt-BR');
+                  };
+
+                  const getIcon = () => {
+                    switch (activity.type) {
+                      case 'meeting':
+                        return <Calendar className="h-5 w-5 text-blue-600" />;
+                      case 'member':
+                        return <Users className="h-5 w-5 text-green-600" />;
+                      case 'report':
+                        return <BarChart3 className="h-5 w-5 text-purple-600" />;
+                      default:
+                        return <Calendar className="h-5 w-5 text-gray-600" />;
+                    }
+                  };
+
+                  const getBgColor = () => {
+                    switch (activity.type) {
+                      case 'meeting':
+                        return 'bg-blue-50 border-blue-200';
+                      case 'member':
+                        return 'bg-green-50 border-green-200';
+                      case 'report':
+                        return 'bg-purple-50 border-purple-200';
+                      default:
+                        return 'bg-gray-50 border-gray-200';
+                    }
+                  };
+
+                  return (
+                    <Card key={activity.id} className={`${getBgColor()} border hover:shadow-md transition-shadow`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1">
+                            {getIcon()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-900">
+                                  {activity.description}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {activity.gc_name}
+                                </p>
+                                {activity.user_name && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Por: {activity.user_name}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge variant="outline" className="text-xs whitespace-nowrap">
+                                {getTimeAgo(activity.timestamp)}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
