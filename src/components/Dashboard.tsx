@@ -75,9 +75,9 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
 
   const normalizedProfileRole = normalizeRole(profile?.role);
   const normalizedUserType = normalizeRole(userType);
-  const effectiveRole: SupportedRole | undefined = normalizedProfileRole === 'admin' && normalizedUserType
+  const effectiveRole: SupportedRole = normalizedProfileRole === 'admin' && normalizedUserType
     ? normalizedUserType
-    : normalizedProfileRole ?? normalizedUserType;
+    : (normalizedProfileRole ?? normalizedUserType ?? 'co_leader');
 
   // Usar o userType escolhido pelo admin, ou o role do perfil se não for admin
   // Hook para buscar dados reais
