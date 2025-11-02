@@ -18,7 +18,6 @@ interface RegistroEncontroProps {
 export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
   const [formData, setFormData] = useState({
     data: "",
-    horario: "",
     local: "",
     lider: "",
     tema: "",
@@ -31,7 +30,7 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.data || !formData.horario || !formData.local || !formData.lider) {
+    if (!formData.data || !formData.local || !formData.lider) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
@@ -52,8 +51,8 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
     setLoading(true);
 
     try {
-      // Criar o timestamp combinando data e horário
-      const dateTime = new Date(`${formData.data}T${formData.horario}`);
+      // Usar o início do dia selecionado como referência do encontro
+      const dateTime = new Date(formData.data);
       
       // Inserir o encontro na tabela meetings
       const { data: meetingData, error: meetingError } = await supabase
@@ -83,7 +82,6 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
       // Reset form
       setFormData({
         data: "",
-        horario: "",
         local: "",
         lider: "",
         tema: "",
@@ -142,26 +140,14 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="data">Data do Encontro *</Label>
-                    <Input
-                      id="data"
-                      type="date"
-                      value={formData.data}
-                      onChange={(e) => handleChange("data", e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="horario">Horário *</Label>
-                    <Input
-                      id="horario"
-                      type="time"
-                      value={formData.horario}
-                      onChange={(e) => handleChange("horario", e.target.value)}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="data">Data do Encontro *</Label>
+                  <Input
+                    id="data"
+                    type="date"
+                    value={formData.data}
+                    onChange={(e) => handleChange("data", e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">
