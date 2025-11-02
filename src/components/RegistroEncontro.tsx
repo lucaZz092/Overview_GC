@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { Calendar, ArrowLeft, Users, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { Footer } from "@/components/Footer";
 
 interface RegistroEncontroProps {
@@ -26,6 +27,70 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
   });
   const [loading, setLoading] = useState(false);
   const { user } = useAuthContext();
+  const { profile } = useUserProfile();
+  const [leaders, setLeaders] = useState<{ id: string; name: string | null }[]>([]);
+  const [leadersLoading, setLeadersLoading] = useState(false);
+
+  useEffect(() => {
+    const loadLeaders = async () => {
+      if (!profile?.grupo_crescimento) {
+        if (profile) {
+          setLeaders([{ id: profile.id, name: profile.name || 'Líder' }]);
+          setFormData((prev) => (prev.lider ? prev : { ...prev, lider: profile.id }));
+        } else {
+          setLeaders([]);
+        }
+        return;
+      }
+
+      setLeadersLoading(true);
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, name, role')
+          .eq('grupo_crescimento', profile.grupo_crescimento)
+          .in('role', ['leader', 'pastor']);
+
+        if (error) {
+          throw error;
+        }
+
+        const normalized = (data || []).filter(Boolean) as { id: string; name: string | null }[];
+
+        if (normalized.length === 0) {
+          const fallbackName = profile.name || 'Líder não informado';
+          setLeaders([{ id: profile.id, name: fallbackName }]);
+          setFormData((prev) => (prev.lider ? prev : { ...prev, lider: profile.id }));
+          return;
+        }
+
+        setLeaders(normalized);
+        setFormData((prev) => (prev.lider ? prev : { ...prev, lider: normalized[0]?.id || '' }));
+      } catch (error: any) {
+        console.error('Erro ao carregar líderes do GC:', error);
+        toast({
+          title: 'Não foi possível carregar os líderes',
+          description: error.message || 'Tente novamente mais tarde.',
+          variant: 'destructive',
+        });
+
+        if (profile) {
+          setLeaders([{ id: profile.id, name: profile.name || 'Líder' }]);
+          setFormData((prev) => (prev.lider ? prev : { ...prev, lider: profile.id }));
+        }
+      } finally {
+        setLeadersLoading(false);
+      }
+    };
+
+    loadLeaders();
+  }, [profile]);
+
+  const selectedLeaderName = useMemo(() => {
+    const found = leaders.find((leader) => leader.id === formData.lider);
+    return found?.name || '';
+  }, [leaders, formData.lider]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +118,15 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
     try {
       // Usar o início do dia selecionado como referência do encontro
       const dateTime = new Date(formData.data);
+
+      if (!selectedLeaderName) {
+        toast({
+          title: "Selecione o líder responsável",
+          description: "É necessário informar o líder responsável pelo encontro.",
+          variant: "destructive",
+        });
+        return;
+      }
       
       // Inserir o encontro na tabela meetings
       const { data: meetingData, error: meetingError } = await supabase
@@ -63,7 +137,7 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
           date: dateTime.toISOString(),
           location: formData.local,
           attendance_count: formData.presentes ? parseInt(formData.presentes) : 0,
-          notes: `Líder: ${formData.lider}`,
+          notes: `Líder: ${selectedLeaderName}`,
           user_id: user.id
         } as any)
         .select()
@@ -83,7 +157,7 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
       setFormData({
         data: "",
         local: "",
-        lider: "",
+        lider: leaders[0]?.id || "",
         tema: "",
         presentes: "",
         observacoes: ""
@@ -166,15 +240,20 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
 
                 <div className="space-y-2">
                   <Label htmlFor="lider">Líder Responsável *</Label>
-                  <Select value={formData.lider} onValueChange={(value) => handleChange("lider", value)}>
+                  <Select
+                    value={formData.lider}
+                    onValueChange={(value) => handleChange("lider", value)}
+                    disabled={leadersLoading || leaders.length === 0}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione o líder responsável" />
+                      <SelectValue placeholder={leadersLoading ? "Carregando líderes..." : "Selecione o líder responsável"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="joao-silva">João Silva</SelectItem>
-                      <SelectItem value="maria-santos">Maria Santos</SelectItem>
-                      <SelectItem value="pedro-oliveira">Pedro Oliveira</SelectItem>
-                      <SelectItem value="ana-costa">Ana Costa</SelectItem>
+                      {leaders.map((leader) => (
+                        <SelectItem key={leader.id} value={leader.id}>
+                          {leader.name || 'Líder sem nome'}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

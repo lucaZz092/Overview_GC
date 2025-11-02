@@ -9,6 +9,37 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { supabase } from "@/lib/supabase";
 import { Footer } from "@/components/Footer";
 
+type SupportedRole = 'admin' | 'pastor' | 'leader' | 'co_leader';
+
+const normalizeRole = (rawRole?: string | null): SupportedRole | undefined => {
+  if (!rawRole) return undefined;
+
+  const normalized = rawRole
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  switch (normalized) {
+    case 'admin':
+      return 'admin';
+    case 'pastor':
+      return 'pastor';
+    case 'leader':
+    case 'lider':
+      return 'leader';
+    case 'co_leader':
+    case 'co_lider':
+    case 'coleader':
+    case 'colider':
+      return 'co_leader';
+    default:
+      return undefined;
+  }
+};
+
 interface DashboardProps {
   userType: string;
   onNavigate: (page: string) => void;
@@ -42,9 +73,13 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
   const [leaderActivitiesLoading, setLeaderActivitiesLoading] = useState(false);
   const [leaderActivitiesError, setLeaderActivitiesError] = useState<string | null>(null);
 
-  // Usar o userType escolhido pelo admin, ou o role do perfil se não for admin
-  const effectiveRole = (profile?.role === 'admin' && userType) ? userType : profile?.role;
+  const normalizedProfileRole = normalizeRole(profile?.role);
+  const normalizedUserType = normalizeRole(userType);
+  const effectiveRole: SupportedRole | undefined = normalizedProfileRole === 'admin' && normalizedUserType
+    ? normalizedUserType
+    : normalizedProfileRole ?? normalizedUserType;
 
+  // Usar o userType escolhido pelo admin, ou o role do perfil se não for admin
   // Hook para buscar dados reais
   useEffect(() => {
     const fetchRealData = async () => {
@@ -271,12 +306,19 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
     };
 
     const getRoleLabel = (role: string) => {
-      switch (role) {
-        case 'admin': return 'Administrador';
-        case 'pastor': return 'Pastor';
-        case 'leader': return 'Líder';
-        case 'co_leader': return 'Co-líder';
-        default: return role;
+      const normalized = normalizeRole(role) ?? normalizeRole(normalizedUserType) ?? normalizeRole(profile?.role);
+
+      switch (normalized) {
+        case 'admin':
+          return 'Administrador';
+        case 'pastor':
+          return 'Pastor';
+        case 'leader':
+          return 'Líder';
+        case 'co_leader':
+          return 'Co-líder';
+        default:
+          return role;
       }
     };
 
