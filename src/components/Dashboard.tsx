@@ -123,7 +123,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
               throw relatedProfilesError;
             }
 
-            (relatedProfiles || []).forEach((person) => {
+            (relatedProfiles || []).forEach((person: any) => {
               relevantUserIdsSet.add(person.id);
               userNameMap.set(person.id, person.name || 'Co-líder');
               userGroupMap.set(person.id, person.grupo_crescimento);
@@ -151,7 +151,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
             throw recentMeetingsError;
           }
 
-          const formattedActivities: LeaderActivityEntry[] = (recentMeetings || []).map((meeting) => ({
+          const formattedActivities: LeaderActivityEntry[] = (recentMeetings || []).map((meeting: any) => ({
             id: meeting.id,
             title: meeting.title || 'Encontro registrado',
             date: meeting.date,
