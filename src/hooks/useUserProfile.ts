@@ -72,14 +72,13 @@ export const useUserProfile = () => {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id)
-          .limit(1);
+          .eq('id', user.id);
 
         if (error) {
           throw error;
         }
 
-        const profileData = (Array.isArray(data) ? data[0] : data) as DbProfileRow | undefined;
+  const profileData = (Array.isArray(data) ? data[0] : data) as DbProfileRow | undefined;
 
         if (!profileData) {
           setProfile(null);
