@@ -42,6 +42,17 @@ const normalizeRole = (role?: string | null): UserProfile['role'] | undefined =>
   }
 };
 
+type DbProfileRow = {
+  id: string;
+  email: string | null;
+  name: string | null;
+  role: string | null;
+  grupo_crescimento?: string | null;
+  is_active?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
 export const useUserProfile = () => {
   const { user } = useAuthContext();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -62,27 +73,13 @@ export const useUserProfile = () => {
           .from('profiles')
           .select('*')
           .eq('id', user.id)
-          .maybeSingle();
+          .limit(1);
 
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           throw error;
         }
 
-        let profileData: any = data;
-
-        if ((!profileData || error?.code === 'PGRST116')) {
-          const { data: multipleData, error: multipleError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .limit(1);
-
-          if (multipleError) {
-            throw multipleError;
-          }
-
-          profileData = Array.isArray(multipleData) ? multipleData[0] : multipleData;
-        }
+        const profileData = (Array.isArray(data) ? data[0] : data) as DbProfileRow | undefined;
 
         if (!profileData) {
           setProfile(null);
@@ -93,8 +90,14 @@ export const useUserProfile = () => {
 
         const safeRole = normalizeRole(profileData.role) ?? 'co_leader';
         const safeProfile: UserProfile = {
-          ...profileData,
+          id: profileData.id,
+          email: profileData.email ?? '',
+          name: profileData.name ?? 'Usuário',
           role: safeRole,
+          grupo_crescimento: profileData.grupo_crescimento ?? undefined,
+          is_active: profileData.is_active ?? true,
+          created_at: profileData.created_at ?? new Date().toISOString(),
+          updated_at: profileData.updated_at ?? new Date().toISOString(),
         };
 
         setProfile(safeProfile);
