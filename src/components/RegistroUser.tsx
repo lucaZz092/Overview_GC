@@ -58,6 +58,8 @@ export function RegistroUser({ onRegister }: RegistroProps) {
       }
 
       const updateData: any = {
+        id: authResult.user.id,
+        email: email,
         name: nome,
         role: userType,
       };
@@ -66,10 +68,9 @@ export function RegistroUser({ onRegister }: RegistroProps) {
         updateData.grupo_crescimento = userGC;
       }
 
-      const { error: profileError } = await (supabase
-        .from('users') as any)
-        .update(updateData)
-        .eq('id', authResult.user.id);
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert(updateData, { onConflict: 'id' });
 
       if (profileError) {
         console.error('Erro ao atualizar perfil:', profileError);

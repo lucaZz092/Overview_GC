@@ -12,6 +12,35 @@ import BlurText from "@/components/ui/blur-text";
 import TextType from "@/components/ui/text-type";
 import { Footer } from "@/components/Footer";
 
+const normalizeRole = (role?: string | null) => {
+  if (!role) return undefined;
+
+  const normalized = role
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  switch (normalized) {
+    case 'admin':
+      return 'admin';
+    case 'pastor':
+      return 'pastor';
+    case 'leader':
+    case 'lider':
+      return 'leader';
+    case 'co_leader':
+    case 'co_lider':
+    case 'coleader':
+    case 'colider':
+      return 'co_leader';
+    default:
+      return undefined;
+  }
+};
+
 
 interface LoginProps {
   onLogin: (userType: string) => void;
@@ -47,19 +76,19 @@ export function Login({ onLogin }: LoginProps) {
       const { user } = await signIn(email, password);
       
       // Verificar se é admin
-      const { data: userData, error } = await supabase
-        .from('users')
+      type ProfileRoleRow = { role: string | null };
+      const { data: profileRows, error } = await supabase
+        .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single() as { data: { role: string } | null; error: any };
+        .limit(1) as { data: ProfileRoleRow[] | null; error: any };
 
-      if (error || !userData) {
+      if (error) {
         console.error('Erro ao buscar role do usuário:', error);
-        setLoading(false);
-        return;
+        throw error;
       }
 
-      const userRole = userData.role || 'co_leader';
+      const userRole = normalizeRole(profileRows?.[0]?.role) ?? 'co_leader';
       
       if (userRole === 'admin') {
         setShowRoleSelection(true);
@@ -67,7 +96,7 @@ export function Login({ onLogin }: LoginProps) {
       }
 
       // Login normal para não-admins
-      onLogin(userRole || 'co_leader');
+  onLogin(userRole);
     } catch (error: any) {
       console.error('Login error:', error);
       

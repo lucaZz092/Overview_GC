@@ -52,7 +52,7 @@ export const MeusRelatorios: React.FC<{ onBack: () => void }> = ({ onBack }) => 
 
       // Buscar co-líderes do mesmo GC
       const { data: coLeaders, error: coLeadersError } = await supabase
-        .from('users')
+        .from('profiles')
         .select('id, name, email, role')
         .eq('grupo_crescimento', profile.grupo_crescimento)
         .eq('role', 'co_leader')
