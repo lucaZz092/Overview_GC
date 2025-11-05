@@ -78,13 +78,35 @@ export const useUserProfile = () => {
           throw error;
         }
 
-  const profileData = (Array.isArray(data) ? data[0] : data) as DbProfileRow | undefined;
+        let profileData = (Array.isArray(data) ? data[0] : data) as DbProfileRow | undefined;
 
+        // Se o perfil não existir, criar automaticamente na tabela 'users'
         if (!profileData) {
-          setProfile(null);
-          setError('Perfil não encontrado.');
-          setLoading(false);
-          return;
+          console.log('Perfil não encontrado, criando automaticamente...');
+          
+          const { data: newProfile, error: insertError } = await (supabase as any)
+            .from('users')
+            .upsert({
+              id: user.id,
+              email: user.email || '',
+              name: user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário',
+              role: 'co_leader',
+              is_active: true,
+            }, {
+              onConflict: 'id'
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('Erro ao criar perfil:', insertError);
+            setProfile(null);
+            setError('Não foi possível criar o perfil. Tente fazer login novamente.');
+            setLoading(false);
+            return;
+          }
+
+          profileData = newProfile as DbProfileRow;
         }
 
         const safeRole = normalizeRole(profileData.role) ?? 'co_leader';
