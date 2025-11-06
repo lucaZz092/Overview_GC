@@ -83,6 +83,8 @@ export const useUserProfile = () => {
         // Se o perfil não existir, criar automaticamente na tabela 'users'
         if (!profileData) {
           console.log('Perfil não encontrado, criando automaticamente...');
+          console.log('User ID:', user.id);
+          console.log('User Email:', user.email);
           
           const { data: newProfile, error: insertError } = await (supabase as any)
             .from('users')
@@ -100,13 +102,31 @@ export const useUserProfile = () => {
 
           if (insertError) {
             console.error('Erro ao criar perfil:', insertError);
-            setProfile(null);
-            setError('Não foi possível criar o perfil. Tente fazer login novamente.');
-            setLoading(false);
-            return;
+            console.error('Código do erro:', insertError.code);
+            console.error('Detalhes:', insertError.details);
+            console.error('Mensagem:', insertError.message);
+            
+            // Tentar buscar novamente - pode ser que o trigger tenha criado
+            console.log('Tentando buscar o perfil novamente...');
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Aguarda 1 segundo
+            
+            const { data: retryData, error: retryError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', user.id);
+            
+            if (!retryError && retryData && retryData.length > 0) {
+              console.log('Perfil encontrado na segunda tentativa!');
+              profileData = (Array.isArray(retryData) ? retryData[0] : retryData) as DbProfileRow;
+            } else {
+              setProfile(null);
+              setError(`Não foi possível criar o perfil. Erro: ${insertError.message}`);
+              setLoading(false);
+              return;
+            }
+          } else {
+            profileData = newProfile as DbProfileRow;
           }
-
-          profileData = newProfile as DbProfileRow;
         }
 
         const safeRole = normalizeRole(profileData.role) ?? 'co_leader';
