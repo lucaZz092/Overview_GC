@@ -10,6 +10,7 @@ import { MeusRelatorios } from "@/components/MeusRelatorios";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import DiagnosticPage from "./pages/DiagnosticPage";
+import { ConfirmEmail } from "./pages/ConfirmEmail";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/registro" element={<RegistroUser onRegister={handleRegister} />} />
+      <Route path="/confirm-email" element={<ConfirmEmail />} />
       <Route path="/meus-relatorios" element={
         <ProtectedRoute>
           <MeusRelatorios onBack={() => navigate("/")} />
