@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { supabase } from "@/lib/supabase";
 import { Footer } from "@/components/Footer";
 
-type SupportedRole = 'admin' | 'pastor' | 'leader' | 'co_leader';
+type SupportedRole = 'admin' | 'pastor' | 'coordenador' | 'leader' | 'co_leader';
 
 const normalizeRole = (rawRole?: string | null): SupportedRole | undefined => {
   if (!rawRole) return undefined;
@@ -27,6 +27,9 @@ const normalizeRole = (rawRole?: string | null): SupportedRole | undefined => {
       return 'admin';
     case 'pastor':
       return 'pastor';
+    case 'coordenador':
+    case 'coordinator':
+      return 'coordenador';
     case 'leader':
     case 'lider':
       return 'leader';
@@ -313,6 +316,8 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
           return 'Administrador';
         case 'pastor':
           return 'Pastor';
+        case 'coordenador':
+          return 'Coordenador';
         case 'leader':
           return 'Líder';
         case 'co_leader':
@@ -451,6 +456,14 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
                 </Button>
                 
                 <Button 
+                  onClick={() => onRoleSelect('coordenador')}
+                  className="w-full bg-gradient-primary text-lg py-6"
+                  variant="outline"
+                >
+                  📊 Coordenador
+                </Button>
+                
+                <Button 
                   onClick={() => onRoleSelect('leader')}
                   className="w-full bg-gradient-primary text-lg py-6"
                   variant="outline"
@@ -519,6 +532,8 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
         return "Área Administrativa";
       case "pastor":
         return "Área do Pastor";
+      case "coordenador":
+        return "Área do Coordenador";
       case "leader":
         return "Área do Líder";
       case "co_leader":
@@ -541,6 +556,13 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
         return (
           <div className="flex gap-2">
             <Badge variant="destructive">Pastor</Badge>
+            {isActingAsAdmin && <Badge variant="outline" className="text-xs">Admin</Badge>}
+          </div>
+        );
+      case "coordenador":
+        return (
+          <div className="flex gap-2">
+            <Badge variant="destructive">Coordenador</Badge>
             {isActingAsAdmin && <Badge variant="outline" className="text-xs">Admin</Badge>}
           </div>
         );
@@ -706,7 +728,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
               </Card>
             ))}
           </div>
-        ) : effectiveRole === "pastor" ? (
+        ) : effectiveRole === "pastor" || effectiveRole === "coordenador" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {pastorStats.map((stat, index) => (
               <Card key={index} className="shadow-soft hover:shadow-strong transition-all duration-200">
@@ -837,7 +859,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
               </CardHeader>
             </Card>
           </div>
-        ) : effectiveRole === "pastor" ? (
+        ) : effectiveRole === "pastor" || effectiveRole === "coordenador" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card">
               <CardHeader>
@@ -880,7 +902,7 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
         ) : null}
 
         {/* Recent Activity - Filtrada por tipo de usuário */}
-        {effectiveRole === "pastor" && (
+        {(effectiveRole === "pastor" || effectiveRole === "coordenador") && (
           <Card className="mt-8 shadow-soft">
             <CardHeader>
               <CardTitle>Atividade Recente - Todos os Grupos</CardTitle>

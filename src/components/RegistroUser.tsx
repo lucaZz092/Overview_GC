@@ -214,7 +214,7 @@ export function RegistroUser({ onRegister }: RegistroProps) {
                   ✨ Cadastro direto no sistema
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Pastores: contate o administrador para criação da conta
+                  Pastores e Coordenadores: contate o administrador para criação da conta
                 </p>
               </div>
             </form>

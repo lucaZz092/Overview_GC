@@ -6,7 +6,7 @@ export interface UserProfile {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'pastor' | 'leader' | 'co_leader';
+  role: 'admin' | 'pastor' | 'coordenador' | 'leader' | 'co_leader';
   grupo_crescimento?: string;
   is_active: boolean;
   created_at: string;
@@ -29,6 +29,9 @@ const normalizeRole = (role?: string | null): UserProfile['role'] | undefined =>
       return 'admin';
     case 'pastor':
       return 'pastor';
+    case 'coordenador':
+    case 'coordinator':
+      return 'coordenador';
     case 'leader':
     case 'lider':
       return 'leader';
@@ -156,8 +159,9 @@ export const useUserProfile = () => {
   }, [user]);
 
   const isAdmin = profile?.role === 'admin';
+  const isCoordenador = profile?.role === 'coordenador' || isAdmin;
   const isPastor = profile?.role === 'pastor' || isAdmin;
-  const isLeader = profile?.role === 'leader' || isPastor;
+  const isLeader = profile?.role === 'leader' || isPastor || isCoordenador;
   const isCoLeader = profile?.role === 'co_leader' || isLeader;
 
   return {
@@ -165,6 +169,7 @@ export const useUserProfile = () => {
     loading,
     error,
     isAdmin,
+    isCoordenador,
     isPastor,
     isLeader,
     isCoLeader,
