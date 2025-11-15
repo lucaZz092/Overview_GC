@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Login } from "@/components/Login";
 import { Dashboard } from "@/components/Dashboard";
 import { RegistroEncontro } from "@/components/RegistroEncontro";
@@ -12,6 +13,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 
 const Index = () => {
   const { user, loading, signOut } = useAuthContext();
+  const navigate = useNavigate();
   const [userType, setUserType] = useState("");
   const [currentPage, setCurrentPage] = useState("dashboard");
 
@@ -33,7 +35,14 @@ const Index = () => {
   };
 
   const handleNavigate = (page: string) => {
-    setCurrentPage(page);
+    // Páginas que usam React Router
+    const routerPages = ["relatorios-gerais", "agenda-completa", "gestao-geral"];
+    
+    if (routerPages.includes(page)) {
+      navigate(`/${page}`);
+    } else {
+      setCurrentPage(page);
+    }
   };
 
   const handleBack = () => {
