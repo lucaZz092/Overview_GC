@@ -861,7 +861,10 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
           </div>
         ) : effectiveRole === "pastor" || effectiveRole === "coordenador" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card">
+            <Card 
+              className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+              onClick={() => onNavigate("relatorios-gerais")}
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Eye className="h-5 w-5 text-primary" />
@@ -873,7 +876,10 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
               </CardHeader>
             </Card>
 
-            <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card">
+            <Card 
+              className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+              onClick={() => onNavigate("agenda-completa")}
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-primary" />
@@ -885,7 +891,10 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
               </CardHeader>
             </Card>
 
-            <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card">
+            <Card 
+              className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+              onClick={() => onNavigate("gestao-geral")}
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-primary" />

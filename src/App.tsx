@@ -12,6 +12,9 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import DiagnosticPage from "./pages/DiagnosticPage";
 import { ConfirmEmail } from "./pages/ConfirmEmail";
 import { ResetPassword } from "./pages/ResetPassword";
+import { RelatoriosGerais } from "./pages/RelatoriosGerais";
+import { AgendaCompleta } from "./pages/AgendaCompleta";
+import { GestaoGeral } from "./pages/GestaoGeral";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +34,21 @@ function AppRoutes() {
       <Route path="/meus-relatorios" element={
         <ProtectedRoute>
           <MeusRelatorios onBack={() => navigate("/")} />
+        </ProtectedRoute>
+      } />
+      <Route path="/relatorios-gerais" element={
+        <ProtectedRoute>
+          <RelatoriosGerais onBack={() => navigate("/")} />
+        </ProtectedRoute>
+      } />
+      <Route path="/agenda-completa" element={
+        <ProtectedRoute>
+          <AgendaCompleta onBack={() => navigate("/")} />
+        </ProtectedRoute>
+      } />
+      <Route path="/gestao-geral" element={
+        <ProtectedRoute>
+          <GestaoGeral onBack={() => navigate("/")} />
         </ProtectedRoute>
       } />
       <Route path="/diagnostic" element={<DiagnosticPage />} />
