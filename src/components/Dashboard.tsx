@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut, User, Mail, Shield, Calendar as CalendarIcon } from "lucide-react";
+import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut, User, Mail, Shield, Calendar as CalendarIcon, Megaphone } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -906,6 +906,21 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
               </CardHeader>
             </Card>
 
+            <Card 
+              className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+              onClick={() => onNavigate("avisos")}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Megaphone className="h-5 w-5 text-primary" />
+                  Avisos e Comunicados
+                </CardTitle>
+                <CardDescription>
+                  Gerenciar mensagens para líderes
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
 
           </div>
         ) : null}
@@ -1053,21 +1068,144 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
           </Card>
         )}
 
-        {/* Mensagem motivacional para co-líderes */}
-        {effectiveRole === "co_leader" && (
-          <Card className="mt-8 shadow-soft bg-gradient-card">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">Titulo da mensagem</h3>
-                <p className="text-muted-foreground">
-                  aqui vai algum aviso ou mensagem. Adicionar alguma funcao para trazer publicacoes do insta da igreja (ultimas 3 ou 4)
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Avisos para líderes e co-líderes */}
+        {(effectiveRole === "leader" || effectiveRole === "co_leader") && (
+          <AnnouncementsSection role={effectiveRole} />
         )}
       </div>
       <Footer />
+    </div>
+  );
+}
+
+// Componente para exibir avisos
+function AnnouncementsSection({ role }: { role: string }) {
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadAnnouncements();
+  }, [role]);
+
+  const loadAnnouncements = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .contains('target_roles', [role])
+        .eq('is_active', true)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+        .order('priority', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+      setAnnouncements(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar avisos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return <span className="text-red-500">🔴</span>;
+      case 'high':
+        return <span className="text-orange-500">🟠</span>;
+      default:
+        return <span className="text-blue-500">🔵</span>;
+    }
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return 'Urgente';
+      case 'high': return 'Importante';
+      case 'normal': return 'Normal';
+      case 'low': return 'Informativo';
+      default: return 'Normal';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card className="mt-8 shadow-soft bg-gradient-card">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <p className="text-muted-foreground">Carregando avisos...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (announcements.length === 0) {
+    return (
+      <Card className="mt-8 shadow-soft bg-gradient-card">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold mb-2">📢 Avisos e Comunicados</h3>
+            <p className="text-muted-foreground">
+              Nenhum aviso no momento. Fique atento às atualizações da liderança!
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="mt-8 space-y-4">
+      <h3 className="text-xl font-semibold flex items-center gap-2">
+        📢 Avisos e Comunicados
+      </h3>
+      {announcements.map((announcement) => (
+        <Card 
+          key={announcement.id} 
+          className="shadow-soft bg-gradient-card border-l-4"
+          style={{
+            borderLeftColor: 
+              announcement.priority === 'urgent' ? '#ef4444' : 
+              announcement.priority === 'high' ? '#f97316' : 
+              '#3b82f6'
+          }}
+        >
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  {getPriorityIcon(announcement.priority)}
+                  <CardTitle className="text-lg">{announcement.title}</CardTitle>
+                  <Badge 
+                    variant="secondary" 
+                    className={
+                      announcement.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                      announcement.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                      'bg-blue-100 text-blue-700'
+                    }
+                  >
+                    {getPriorityLabel(announcement.priority)}
+                  </Badge>
+                </div>
+                <CardDescription className="text-xs">
+                  {new Date(announcement.created_at).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: 'long',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm whitespace-pre-wrap">{announcement.content}</p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
