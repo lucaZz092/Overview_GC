@@ -37,6 +37,7 @@ export function Avisos({ onBack }: AvisosProps) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'active' | 'all'>('active'); // Novo filtro
 
   // Form state
   const [formData, setFormData] = useState({
@@ -413,6 +414,30 @@ export function Avisos({ onBack }: AvisosProps) {
           </Card>
         )}
 
+        {/* Filtro de Visualização */}
+        <div className="flex gap-2 mb-4">
+          <Button
+            variant={viewMode === 'active' ? 'default' : 'outline'}
+            onClick={() => setViewMode('active')}
+            className={viewMode === 'active' ? '' : 'bg-white'}
+          >
+            Avisos Ativos
+            <Badge variant="secondary" className="ml-2">
+              {announcements.filter(a => a.is_active && !isExpired(a.expires_at)).length}
+            </Badge>
+          </Button>
+          <Button
+            variant={viewMode === 'all' ? 'default' : 'outline'}
+            onClick={() => setViewMode('all')}
+            className={viewMode === 'all' ? '' : 'bg-white'}
+          >
+            Histórico Completo
+            <Badge variant="secondary" className="ml-2">
+              {announcements.length}
+            </Badge>
+          </Button>
+        </div>
+
         {/* Lista de Avisos */}
         {loading ? (
           <Card className="shadow-soft">
@@ -434,12 +459,37 @@ export function Avisos({ onBack }: AvisosProps) {
               </Button>
             </CardContent>
           </Card>
-        ) : (
-          <div className="space-y-4">
-            {announcements.map((announcement) => (
+        ) : (() => {
+          const filteredAnnouncements = announcements.filter((announcement) => {
+            if (viewMode === 'active') {
+              // Mostrar apenas ativos e não expirados
+              return announcement.is_active && !isExpired(announcement.expires_at);
+            }
+            // Mostrar todos no histórico
+            return true;
+          });
+
+          if (filteredAnnouncements.length === 0) {
+            return (
+              <Card className="shadow-soft">
+                <CardContent className="py-12 text-center">
+                  <Megaphone className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">
+                    {viewMode === 'active' 
+                      ? 'Nenhum aviso ativo no momento'
+                      : 'Nenhum aviso no histórico'}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          }
+
+          return (
+            <div className="space-y-4">
+              {filteredAnnouncements.map((announcement) => (
               <Card 
                 key={announcement.id} 
-                className={`shadow-soft ${!announcement.is_active || isExpired(announcement.expires_at) ? 'opacity-60' : ''}`}
+                className={`shadow-soft ${!announcement.is_active || isExpired(announcement.expires_at) ? 'opacity-60 bg-gray-50' : ''}`}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -499,7 +549,8 @@ export function Avisos({ onBack }: AvisosProps) {
               </Card>
             ))}
           </div>
-        )}
+          );
+        })()}
       </div>
       <Footer />
     </div>
