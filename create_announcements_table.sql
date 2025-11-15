@@ -1,5 +1,5 @@
 -- Criar tabela de avisos/comunicados
-CREATE TABLE IF NOT EXISTS announcements (
+CREATE TABLE IF NOT EXISTS public.announcements (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
   content TEXT NOT NULL,
@@ -13,11 +13,11 @@ CREATE TABLE IF NOT EXISTS announcements (
 );
 
 -- Habilitar RLS
-ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Todos autenticados podem ler avisos ativos destinados ao seu papel
 CREATE POLICY "Users can view active announcements for their role"
-  ON announcements
+  ON public.announcements
   FOR SELECT
   USING (
     is_active = true 
@@ -25,61 +25,61 @@ CREATE POLICY "Users can view active announcements for their role"
     AND (
       -- Admin, pastor e coordenador veem tudo
       EXISTS (
-        SELECT 1 FROM profiles 
-        WHERE profiles.id = auth.uid() 
-        AND profiles.role IN ('admin', 'pastor', 'coordenador')
+        SELECT 1 FROM public.users 
+        WHERE users.id = auth.uid() 
+        AND users.role IN ('admin', 'pastor', 'coordenador')
       )
       OR
       -- Outros veem apenas avisos destinados ao seu papel
       EXISTS (
-        SELECT 1 FROM profiles 
-        WHERE profiles.id = auth.uid() 
-        AND profiles.role = ANY(target_roles)
+        SELECT 1 FROM public.users 
+        WHERE users.id = auth.uid() 
+        AND users.role = ANY(target_roles)
       )
     )
   );
 
 -- Policy: Pastor, coordenador e admin podem criar avisos
 CREATE POLICY "Pastors and coordinators can create announcements"
-  ON announcements
+  ON public.announcements
   FOR INSERT
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM profiles 
-      WHERE profiles.id = auth.uid() 
-      AND profiles.role IN ('admin', 'pastor', 'coordenador')
+      SELECT 1 FROM public.users 
+      WHERE users.id = auth.uid() 
+      AND users.role IN ('admin', 'pastor', 'coordenador')
     )
   );
 
 -- Policy: Pastor, coordenador e admin podem atualizar seus próprios avisos
 CREATE POLICY "Pastors and coordinators can update their announcements"
-  ON announcements
+  ON public.announcements
   FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM profiles 
-      WHERE profiles.id = auth.uid() 
-      AND profiles.role IN ('admin', 'pastor', 'coordenador')
+      SELECT 1 FROM public.users 
+      WHERE users.id = auth.uid() 
+      AND users.role IN ('admin', 'pastor', 'coordenador')
     )
   );
 
 -- Policy: Pastor, coordenador e admin podem deletar avisos
 CREATE POLICY "Pastors and coordinators can delete announcements"
-  ON announcements
+  ON public.announcements
   FOR DELETE
   USING (
     EXISTS (
-      SELECT 1 FROM profiles 
-      WHERE profiles.id = auth.uid() 
-      AND profiles.role IN ('admin', 'pastor', 'coordenador')
+      SELECT 1 FROM public.users 
+      WHERE users.id = auth.uid() 
+      AND users.role IN ('admin', 'pastor', 'coordenador')
     )
   );
 
 -- Criar índices para melhor performance
-CREATE INDEX idx_announcements_active ON announcements(is_active);
-CREATE INDEX idx_announcements_expires_at ON announcements(expires_at);
-CREATE INDEX idx_announcements_target_roles ON announcements USING gin(target_roles);
-CREATE INDEX idx_announcements_created_at ON announcements(created_at DESC);
+CREATE INDEX idx_announcements_active ON public.announcements(is_active);
+CREATE INDEX idx_announcements_expires_at ON public.announcements(expires_at);
+CREATE INDEX idx_announcements_target_roles ON public.announcements USING gin(target_roles);
+CREATE INDEX idx_announcements_created_at ON public.announcements(created_at DESC);
 
 -- Trigger para atualizar updated_at
 CREATE OR REPLACE FUNCTION update_announcements_updated_at()
@@ -91,6 +91,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER set_announcements_updated_at
-  BEFORE UPDATE ON announcements
+  BEFORE UPDATE ON public.announcements
   FOR EACH ROW
   EXECUTE FUNCTION update_announcements_updated_at();
