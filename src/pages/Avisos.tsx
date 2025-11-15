@@ -61,16 +61,25 @@ export function Avisos({ onBack }: AvisosProps) {
   const loadAnnouncements = async () => {
     try {
       setLoading(true);
+      console.log('📢 Avisos: Iniciando carregamento de avisos...');
+      
       const { data: announcementsData, error } = await supabase
         .from('announcements')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Avisos: Erro ao buscar avisos:', error);
+        console.error('Detalhes:', { message: error.message, details: error.details, code: error.code });
+        throw error;
+      }
+
+      console.log('📊 Avisos: Avisos encontrados:', announcementsData?.length || 0);
 
       // Buscar nomes dos autores
       if (announcementsData && announcementsData.length > 0) {
         const authorIds = [...new Set((announcementsData as any[]).map((a: any) => a.created_by).filter(Boolean))];
+        console.log('👤 Avisos: Buscando nomes de', authorIds.length, 'autores...');
         
         const { data: authorsData, error: authorsError } = await supabase
           .from('profiles')
@@ -87,14 +96,16 @@ export function Avisos({ onBack }: AvisosProps) {
         }));
 
         setAnnouncements(enrichedAnnouncements);
+        console.log('✅ Avisos: Carregados com sucesso');
       } else {
         setAnnouncements([]);
+        console.log('ℹ️ Avisos: Nenhum aviso encontrado');
       }
     } catch (error: any) {
-      console.error('Erro ao carregar avisos:', error);
+      console.error('💥 Avisos: Erro fatal ao carregar avisos:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível carregar os avisos",
+        title: "Erro ao carregar avisos",
+        description: error.message || "Verifique se a tabela 'announcements' foi criada no Supabase",
         variant: "destructive",
       });
     } finally {
@@ -134,24 +145,41 @@ export function Avisos({ onBack }: AvisosProps) {
         created_by: profile?.id,
       };
 
+      console.log('💾 Avisos: Tentando salvar aviso...', { 
+        editing: !!editingId, 
+        data: dataToSave 
+      });
+
       if (editingId) {
+        console.log('✏️ Avisos: Atualizando aviso existente:', editingId);
         const { error } = await supabase
           .from('announcements')
           .update(dataToSave as any)
           .eq('id', editingId);
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Avisos: Erro ao atualizar:', error);
+          throw error;
+        }
 
+        console.log('✅ Avisos: Aviso atualizado com sucesso');
         toast({
           title: "Aviso atualizado!",
           description: "O aviso foi atualizado com sucesso",
         });
       } else {
-        const { error } = await supabase
+        console.log('➕ Avisos: Criando novo aviso...');
+        const { error, data } = await supabase
           .from('announcements')
-          .insert([dataToSave as any]);
+          .insert([dataToSave as any])
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Avisos: Erro ao criar:', error);
+          throw error;
+        }
+
+        console.log('✅ Avisos: Aviso criado com sucesso:', data);
 
         toast({
           title: "Aviso criado!",

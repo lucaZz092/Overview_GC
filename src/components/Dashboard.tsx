@@ -1090,6 +1090,7 @@ function AnnouncementsSection({ role }: { role: string }) {
   const loadAnnouncements = async () => {
     try {
       setLoading(true);
+      console.log('📢 Dashboard: Carregando avisos para papel:', role);
       
       // Buscar todos os avisos ativos
       const { data, error } = await supabase
@@ -1098,12 +1099,19 @@ function AnnouncementsSection({ role }: { role: string }) {
         .eq('is_active', true)
         .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Dashboard: Erro ao buscar avisos:', error);
+        throw error;
+      }
+
+      console.log('📊 Dashboard: Avisos encontrados:', data?.length || 0);
 
       // Filtrar avisos que incluem o papel atual nos target_roles
       const filteredData = (data as any[])?.filter((announcement: any) => 
         announcement.target_roles && announcement.target_roles.includes(role)
       ) || [];
+
+      console.log('🔍 Dashboard: Avisos filtrados para', role, ':', filteredData.length);
 
       // Ordenar por prioridade e data
       const sortedData = filteredData.sort((a: any, b: any) => {
@@ -1114,8 +1122,9 @@ function AnnouncementsSection({ role }: { role: string }) {
       });
 
       setAnnouncements(sortedData.slice(0, 3));
+      console.log('✅ Dashboard: Avisos carregados com sucesso');
     } catch (error) {
-      console.error('Erro ao carregar avisos:', error);
+      console.error('💥 Dashboard: Erro fatal ao carregar avisos:', error);
     } finally {
       setLoading(false);
     }
