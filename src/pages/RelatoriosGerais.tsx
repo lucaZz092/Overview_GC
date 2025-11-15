@@ -57,7 +57,7 @@ export function RelatoriosGerais({ onBack }: RelatoriosGeraisProps) {
 
       // Buscar informações dos autores
       if (reportsData && reportsData.length > 0) {
-        const userIds = [...new Set(reportsData.map(r => r.user_id).filter(Boolean))];
+        const userIds = [...new Set((reportsData as any[]).map((r: any) => r.user_id).filter(Boolean))];
         
         const { data: usersData, error: usersError } = await supabase
           .from('profiles')
@@ -66,9 +66,9 @@ export function RelatoriosGerais({ onBack }: RelatoriosGeraisProps) {
 
         if (usersError) throw usersError;
 
-        const usersMap = new Map(usersData?.map(u => [u.id, u]) || []);
+        const usersMap = new Map((usersData as any[])?.map((u: any) => [u.id, u]) || []);
 
-        const enrichedReports = reportsData.map(report => ({
+        const enrichedReports = (reportsData as any[]).map((report: any) => ({
           ...report,
           author_name: usersMap.get(report.user_id)?.name || 'Desconhecido',
           author_gc: usersMap.get(report.user_id)?.grupo_crescimento || null
