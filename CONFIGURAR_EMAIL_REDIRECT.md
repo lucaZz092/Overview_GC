@@ -29,11 +29,12 @@ https://overview-gc.vercel.app
 
 No campo **"Redirect URLs"**, adicione estas URLs (uma por linha):
 
-**Produção (Vercel):**
+**Redirect URLs:**
 ```
 https://seu-dominio.vercel.app
 https://seu-dominio.vercel.app/login
 https://seu-dominio.vercel.app/confirm-email
+https://seu-dominio.vercel.app/reset-password
 ```
 
 **Desenvolvimento Local:**
@@ -41,9 +42,11 @@ https://seu-dominio.vercel.app/confirm-email
 http://localhost:8080
 http://localhost:8080/login
 http://localhost:8080/confirm-email
+http://localhost:8080/reset-password
 http://localhost:8081
 http://localhost:8081/login
 http://localhost:8081/confirm-email
+http://localhost:8081/reset-password
 ```
 
 ---
@@ -141,4 +144,41 @@ http://localhost:8081/confirm-email
 
 ---
 
-✅ **Pronto!** Após essas configurações, todos os novos usuários serão redirecionados corretamente! 🎉
+## 🔑 Configuração Adicional: Reset de Senha
+
+### **Template de Email para Recuperação de Senha**
+
+1. No Supabase, vá em **Authentication → Email Templates**
+2. Selecione **"Reset Password"** ou **"Password Recovery"**
+3. Modifique o template para:
+
+```html
+<h2>Redefinir sua senha</h2>
+<p>Você solicitou a redefinição de senha para sua conta.</p>
+<p>Clique no link abaixo para criar uma nova senha:</p>
+<p><a href="{{ .SiteURL }}/reset-password?access_token={{ .Token }}&type=recovery">Redefinir Senha</a></p>
+<p>Se você não solicitou esta alteração, ignore este email.</p>
+<p>Este link expira em 1 hora.</p>
+```
+
+4. **Salve** o template
+
+---
+
+## 📋 Páginas Funcionais Criadas
+
+✅ **`/confirm-email`** - Confirmação de email após cadastro
+- Valida token de confirmação
+- Redireciona para login automaticamente
+- Trata erros com mensagens claras
+
+✅ **`/reset-password`** - Redefinição de senha
+- Formulário seguro com validação
+- Confirmação de senha
+- Mostrar/ocultar senha
+- Redireciona para login após sucesso
+- Trata links expirados
+
+---
+
+✅ **Pronto!** Após essas configurações, todos os fluxos de email estão funcionando corretamente! 🎉
