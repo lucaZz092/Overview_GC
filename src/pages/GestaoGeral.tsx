@@ -136,17 +136,17 @@ export function GestaoGeral({ onBack }: GestaoGeralProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+    <div className="min-h-screen bg-gradient-hero">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Button onClick={onBack} variant="outline">
+            <Button onClick={onBack} variant="outline" className="bg-white">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-green-700">Gestão Geral</h1>
-              <p className="text-gray-600">Visão completa de todos os grupos</p>
+              <h1 className="text-3xl font-bold text-white">Gestão Geral</h1>
+              <p className="text-white/80">Visão completa de todos os grupos</p>
             </div>
           </div>
         </div>
@@ -176,7 +176,7 @@ export function GestaoGeral({ onBack }: GestaoGeralProps) {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-soft bg-gradient-to-br from-green-500 to-green-600 text-white">
+              <Card className="shadow-soft bg-gradient-to-br from-purple-500 to-purple-600 text-white">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Users className="h-4 w-4" />
@@ -185,13 +185,13 @@ export function GestaoGeral({ onBack }: GestaoGeralProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">{globalStats.totalGroups}</div>
-                  <p className="text-xs text-green-100 mt-1">
+                  <p className="text-xs text-purple-100 mt-1">
                     GCs ativos
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="shadow-soft bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+              <Card className="shadow-soft bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
@@ -200,13 +200,13 @@ export function GestaoGeral({ onBack }: GestaoGeralProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">{globalStats.totalMeetings}</div>
-                  <p className="text-xs text-purple-100 mt-1">
+                  <p className="text-xs text-indigo-100 mt-1">
                     Total realizados
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="shadow-soft bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+              <Card className="shadow-soft bg-gradient-to-br from-violet-500 to-violet-600 text-white">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
@@ -215,13 +215,13 @@ export function GestaoGeral({ onBack }: GestaoGeralProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">{globalStats.avgAttendance}</div>
-                  <p className="text-xs text-orange-100 mt-1">
+                  <p className="text-xs text-violet-100 mt-1">
                     pessoas/encontro
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="shadow-soft bg-gradient-to-br from-pink-500 to-pink-600 text-white">
+              <Card className="shadow-soft bg-gradient-to-br from-blue-600 to-purple-600 text-white">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Award className="h-4 w-4" />
@@ -234,7 +234,7 @@ export function GestaoGeral({ onBack }: GestaoGeralProps) {
                       ? Math.round((globalStats.activeMembers / globalStats.totalMembers) * 100)
                       : 0}%
                   </div>
-                  <p className="text-xs text-pink-100 mt-1">
+                  <p className="text-xs text-blue-100 mt-1">
                     membros ativos
                   </p>
                 </CardContent>

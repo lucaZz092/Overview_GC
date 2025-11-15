@@ -137,12 +137,12 @@ export function RelatoriosGerais({ onBack }: RelatoriosGeraisProps) {
 
   if (selectedReport) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+      <div className="min-h-screen bg-gradient-hero">
         <div className="container mx-auto px-4 py-8">
           <Button
             onClick={() => setSelectedReport(null)}
             variant="outline"
-            className="mb-6"
+            className="mb-6 bg-white"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar para Lista
@@ -188,17 +188,17 @@ export function RelatoriosGerais({ onBack }: RelatoriosGeraisProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+    <div className="min-h-screen bg-gradient-hero">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Button onClick={onBack} variant="outline">
+            <Button onClick={onBack} variant="outline" className="bg-white">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-green-700">Relatórios Gerais</h1>
-              <p className="text-gray-600">Todos os relatórios da igreja</p>
+              <h1 className="text-3xl font-bold text-white">Relatórios Gerais</h1>
+              <p className="text-white/80">Todos os relatórios da igreja</p>
             </div>
           </div>
         </div>

@@ -147,17 +147,17 @@ export function AgendaCompleta({ onBack }: AgendaCompletaProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+    <div className="min-h-screen bg-gradient-hero">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Button onClick={onBack} variant="outline">
+            <Button onClick={onBack} variant="outline" className="bg-white">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-green-700">Agenda Completa</h1>
-              <p className="text-gray-600">Todos os encontros programados</p>
+              <h1 className="text-3xl font-bold text-white">Agenda Completa</h1>
+              <p className="text-white/80">Todos os encontros programados</p>
             </div>
           </div>
         </div>
