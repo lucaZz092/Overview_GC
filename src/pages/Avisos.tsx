@@ -163,9 +163,15 @@ export function Avisos({ onBack }: AvisosProps) {
       loadAnnouncements();
     } catch (error: any) {
       console.error('Erro ao salvar aviso:', error);
+      console.error('Detalhes do erro:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       toast({
-        title: "Erro",
-        description: error.message || "Não foi possível salvar o aviso",
+        title: "Erro ao salvar aviso",
+        description: error.message || error.details || "Não foi possível salvar o aviso. Verifique se a tabela foi criada no Supabase.",
         variant: "destructive",
       });
     }
