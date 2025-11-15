@@ -1090,18 +1090,30 @@ function AnnouncementsSection({ role }: { role: string }) {
   const loadAnnouncements = async () => {
     try {
       setLoading(true);
+      
+      // Buscar todos os avisos ativos
       const { data, error } = await supabase
         .from('announcements')
         .select('*')
-        .contains('target_roles', [role])
         .eq('is_active', true)
-        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
-        .order('priority', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(3);
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
 
       if (error) throw error;
-      setAnnouncements(data || []);
+
+      // Filtrar avisos que incluem o papel atual nos target_roles
+      const filteredData = (data as any[])?.filter((announcement: any) => 
+        announcement.target_roles && announcement.target_roles.includes(role)
+      ) || [];
+
+      // Ordenar por prioridade e data
+      const sortedData = filteredData.sort((a: any, b: any) => {
+        const priorityOrder: any = { urgent: 4, high: 3, normal: 2, low: 1 };
+        const priorityDiff = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+
+      setAnnouncements(sortedData.slice(0, 3));
     } catch (error) {
       console.error('Erro ao carregar avisos:', error);
     } finally {
