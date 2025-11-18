@@ -26,6 +26,16 @@ interface Announcement {
   author_name?: string;
 }
 
+interface AnnouncementInsert {
+  title: string;
+  content: string;
+  target_roles: string[];
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  expires_at: string | null;
+  is_active: boolean;
+  created_by: string;
+}
+
 interface AvisosProps {
   onBack: () => void;
 }
@@ -135,14 +145,14 @@ export function Avisos({ onBack }: AvisosProps) {
     }
 
     try {
-      const dataToSave = {
+      const dataToSave: AnnouncementInsert = {
         title: formData.title,
         content: formData.content,
         target_roles: formData.target_roles,
         priority: formData.priority,
         expires_at: formData.expires_at || null,
         is_active: formData.is_active,
-        created_by: profile?.id,
+        created_by: profile?.id || '',
       };
 
       console.log('💾 Avisos: Tentando salvar aviso...', { 
@@ -180,7 +190,6 @@ export function Avisos({ onBack }: AvisosProps) {
         }
 
         console.log('✅ Avisos: Aviso criado com sucesso:', data);
-
         toast({
           title: "Aviso criado!",
           description: "O aviso foi publicado com sucesso",

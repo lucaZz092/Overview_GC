@@ -150,7 +150,7 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
 
       toast({
         title: "Encontro registrado!",
-        description: "O encontro foi salvo com sucesso no banco de dados.",
+        description: "O encontro foi salvo com sucesso!",
       });
 
       // Reset form
