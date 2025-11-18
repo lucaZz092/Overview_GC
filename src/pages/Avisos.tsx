@@ -162,9 +162,9 @@ export function Avisos({ onBack }: AvisosProps) {
 
       if (editingId) {
         console.log('✏️ Avisos: Atualizando aviso existente:', editingId);
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('announcements')
-          .update(dataToSave as any)
+          .update(dataToSave)
           .eq('id', editingId);
 
         if (error) {
@@ -179,9 +179,9 @@ export function Avisos({ onBack }: AvisosProps) {
         });
       } else {
         console.log('➕ Avisos: Criando novo aviso...');
-        const { error, data } = await supabase
+        const { error, data } = await (supabase as any)
           .from('announcements')
-          .insert([dataToSave as any])
+          .insert([dataToSave])
           .select();
 
         if (error) {
