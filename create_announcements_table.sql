@@ -15,6 +15,12 @@ CREATE TABLE IF NOT EXISTS public.announcements (
 -- Habilitar RLS
 ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
 
+-- Remover policies existentes (se houver)
+DROP POLICY IF EXISTS "Users can view active announcements for their role" ON public.announcements;
+DROP POLICY IF EXISTS "Pastors and coordinators can create announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Pastors and coordinators can update their announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Pastors and coordinators can delete announcements" ON public.announcements;
+
 -- Policy: Todos autenticados podem ler avisos ativos destinados ao seu papel
 CREATE POLICY "Users can view active announcements for their role"
   ON public.announcements
@@ -75,11 +81,11 @@ CREATE POLICY "Pastors and coordinators can delete announcements"
     )
   );
 
--- Criar índices para melhor performance
-CREATE INDEX idx_announcements_active ON public.announcements(is_active);
-CREATE INDEX idx_announcements_expires_at ON public.announcements(expires_at);
-CREATE INDEX idx_announcements_target_roles ON public.announcements USING gin(target_roles);
-CREATE INDEX idx_announcements_created_at ON public.announcements(created_at DESC);
+-- Criar índices para melhor performance (se não existirem)
+CREATE INDEX IF NOT EXISTS idx_announcements_active ON public.announcements(is_active);
+CREATE INDEX IF NOT EXISTS idx_announcements_expires_at ON public.announcements(expires_at);
+CREATE INDEX IF NOT EXISTS idx_announcements_target_roles ON public.announcements USING gin(target_roles);
+CREATE INDEX IF NOT EXISTS idx_announcements_created_at ON public.announcements(created_at DESC);
 
 -- Trigger para atualizar updated_at
 CREATE OR REPLACE FUNCTION update_announcements_updated_at()
@@ -89,6 +95,8 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS set_announcements_updated_at ON public.announcements;
 
 CREATE TRIGGER set_announcements_updated_at
   BEFORE UPDATE ON public.announcements
