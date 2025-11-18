@@ -813,51 +813,110 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
           </div>
           
         ) : effectiveRole === "leader" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card
-              className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
-              onClick={() => onNavigate("meus-relatorios")}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-primary" />
-                  Meus Relatórios
-                </CardTitle>
-                <CardDescription>
-                  Relatórios dos grupos sob sua liderança
-                </CardDescription>
-              </CardHeader>
-            </Card>
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-semibold mb-2">Suas Funcionalidades</h2>
+              <p className="text-muted-foreground">Gerencie os grupos de crescimento sob sua liderança</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+              <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card" 
+                    onClick={() => onNavigate("registro-encontro")}>
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Plus className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Registrar Encontro</CardTitle>
+                  <CardDescription>
+                    Adicione um novo encontro dos seus grupos
+                  </CardDescription>
+                </CardHeader>
+              </Card>
 
-            <Card 
-              className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
-              onClick={() => onNavigate("proximos-encontros")}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  Próximos Encontros
-                </CardTitle>
-                <CardDescription>
-                  Agenda dos seus grupos
-                </CardDescription>
-              </CardHeader>
-            </Card>
+              <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+                    onClick={() => onNavigate("encontros-registrados")}>
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Calendar className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Ver Encontros</CardTitle>
+                  <CardDescription>
+                    Visualize todos os encontros registrados
+                  </CardDescription>
+                </CardHeader>
+              </Card>
 
-            <Card 
-              className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
-              onClick={() => onNavigate("meus-grupos")}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  Meus Grupos
-                </CardTitle>
-                <CardDescription>
-                  Gerencie seus grupos de crescimento
-                </CardDescription>
-              </CardHeader>
-            </Card>
+              <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+                    onClick={() => onNavigate("registro-membro")}>
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Users className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Cadastrar Membro</CardTitle>
+                  <CardDescription>
+                    Adicione novos membros aos grupos
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+                    onClick={() => onNavigate("membro-registrado")}>
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Users className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Membros Cadastrados</CardTitle>
+                  <CardDescription>
+                    Visualize os membros cadastrados
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card
+                className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+                onClick={() => onNavigate("meus-relatorios")}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Eye className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Meus Relatórios</CardTitle>
+                  <CardDescription>
+                    Relatórios dos grupos sob sua liderança
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card 
+                className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+                onClick={() => onNavigate("proximos-encontros")}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Calendar className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Próximos Encontros</CardTitle>
+                  <CardDescription>
+                    Agenda dos seus grupos
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card 
+                className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+                onClick={() => onNavigate("meus-grupos")}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Users className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Meus Grupos</CardTitle>
+                  <CardDescription>
+                    Gerencie seus grupos de crescimento
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
           </div>
         ) : effectiveRole === "pastor" || effectiveRole === "coordenador" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
