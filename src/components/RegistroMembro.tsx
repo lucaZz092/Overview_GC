@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Users, ArrowLeft, Phone, Mail, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -19,11 +20,10 @@ interface RegistroMembroProps {
 export function RegistroMembro({ onBack }: RegistroMembroProps) {
   const [formData, setFormData] = useState({
     nome: "",
-    email: "",
     telefone: "",
-    endereco: "",
-    dataNascimento: "",
-    estadoCivil: "",
+    dataAniversario: "",
+    batizado: "",
+    membroIgreja:"",
     observacoes: ""
   });
   const [loading, setLoading] = useState(false);
@@ -66,12 +66,9 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
       // Preparar os dados do membro para inserção
       const memberData = {
         name: formData.nome,
-        email: formData.email || null,
         phone: formData.telefone,
-        birth_date: formData.dataNascimento || null,
-        address: formData.endereco || null,
+        birth_date: formData.dataAniversario || null,
         joined_date: new Date().toISOString().split('T')[0], // Data atual
-        notes: `Grupo: ${profile.grupo_crescimento}${formData.estadoCivil ? `, Estado Civil: ${formData.estadoCivil}` : ''}${formData.observacoes ? `, Observações: ${formData.observacoes}` : ''}`,
         user_id: user.id,
         is_active: true
       };
@@ -102,11 +99,10 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
       // Reset form
       setFormData({
         nome: "",
-        email: "",
         telefone: "",
-        endereco: "",
-        dataNascimento: "",
-        estadoCivil: "",
+        dataAniversario: "",
+        batizado: "",
+        membroIgreja: "",
         observacoes: ""
       });
 
@@ -175,21 +171,6 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        className="pl-10"
-                        value={formData.email}
-                        onChange={(e) => handleChange("email", e.target.value)}
-                        placeholder="email@exemplo.com"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
                     <Label htmlFor="telefone">Telefone *</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -201,20 +182,6 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
                         placeholder="(11) 99999-9999"
                       />
                     </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="endereco">Endereço</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="endereco"
-                      className="pl-10"
-                      value={formData.endereco}
-                      onChange={(e) => handleChange("endereco", e.target.value)}
-                      placeholder="Rua, número, bairro, cidade"
-                    />
                   </div>
                 </div>
 
@@ -235,28 +202,41 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="dataNascimento">Data de Nascimento</Label>
+                    <Label htmlFor="dataAniversario">Data de Nascimento</Label>
                     <Input
-                      id="dataNascimento"
+                      id="dataAniversario"
                       type="date"
-                      value={formData.dataNascimento}
-                      onChange={(e) => handleChange("dataNascimento", e.target.value)}
+                      value={formData.dataAniversario}
+                      onChange={(e) => handleChange("dataAniversario", e.target.value)}
                     />
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="estadoCivil">Estado Civil</Label>
-                    <Select value={formData.estadoCivil} onValueChange={(value) => handleChange("estadoCivil", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="solteiro">Solteiro(a)</SelectItem>
-                        <SelectItem value="casado">Casado(a)</SelectItem>
-                        <SelectItem value="divorciado">Divorciado(a)</SelectItem>
-                        <SelectItem value="viuvo">Viúvo(a)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="batizado"
+                      checked={formData.batizado === "sim"}
+                      onCheckedChange={(checked) => 
+                        handleChange("batizado", checked ? "sim" : "nao")
+                      }
+                    />
+                    <Label htmlFor="batizado" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      É batizado
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="membroIgreja"
+                      checked={formData.membroIgreja === "sim"}
+                      onCheckedChange={(checked) => 
+                        handleChange("membroIgreja", checked ? "sim" : "nao")
+                      }
+                    />
+                    <Label htmlFor="membroIgreja" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      É membro da igreja
+                    </Label>
                   </div>
                 </div>
 
