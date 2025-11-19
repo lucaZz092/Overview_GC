@@ -188,14 +188,9 @@ export function RegistroUser({ onRegister }: RegistroProps) {
                       <SelectItem value="gc-legacy-chosen">GC Legacy Chosen</SelectItem>
                       <SelectItem value="gc-legacy-overflow">GC Legacy Overflow</SelectItem>
                       <SelectItem value="gc-legacy-rise">GC Legacy Rise</SelectItem>
-                      <SelectItem value="gc-vila-nova">GC Vila Nova</SelectItem>
-                      <SelectItem value="gc-centro">GC Centro</SelectItem>
-                      <SelectItem value="gc-norte">GC Norte</SelectItem>
-                      <SelectItem value="gc-sul">GC Sul</SelectItem>
-                      <SelectItem value="gc-leste">GC Leste</SelectItem>
-                      <SelectItem value="gc-oeste">GC Oeste</SelectItem>
-                      <SelectItem value="gc-juventude">GC Juventude</SelectItem>
-                      <SelectItem value="gc-casais">GC Casais</SelectItem>
+                      <SelectItem value="gc-legacy-arrow">GC Legacy Arrow</SelectItem>
+                      <SelectItem value="gc-legacy-renew">GC Legacy Renew</SelectItem>
+                      <SelectItem value="gc-legacy-trinity">GC Legacy Trinity</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
