@@ -237,7 +237,7 @@ export function Login({ onLogin }: LoginProps) {
             className="text-4xl font-bold text-white mb-2 justify-center"
           />
           <TextType 
-            text={["Sistema de Gestão de Grupos de Crescimento", "Bem-vindo!"]}
+            text={["Sistema de Gestão de Grupos de Crescimento", "Bem-vindo!", "Lagoinha Morumbi"]}
             typingSpeed={75}
             pauseDuration={1500}
             showCursor={true}
