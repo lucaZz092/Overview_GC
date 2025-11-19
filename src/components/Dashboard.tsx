@@ -245,14 +245,9 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
       'gc-legacy-chosen': 'GC Legacy Chosen',
       'gc-legacy-overflow': 'GC Legacy Overflow',
       'gc-legacy-rise': 'GC Legacy Rise',
-      'gc-vila-nova': 'GC Vila Nova',
-      'gc-centro': 'GC Centro',
-      'gc-norte': 'GC Norte',
-      'gc-sul': 'GC Sul',
-      'gc-leste': 'GC Leste',
-      'gc-oeste': 'GC Oeste',
-      'gc-juventude': 'GC Juventude',
-      'gc-casais': 'GC Casais'
+      'gc-legacy-arrow': 'GC Legacy Arrow',
+      'gc-legacy-renew': 'GC Legacy Renew',
+      'gc-legacy-trinity': 'GC Legacy Trinity',
     };
     
     return gcNames[gcCode] || gcCode;
