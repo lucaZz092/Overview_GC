@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut, User, Mail, Shield, Calendar as CalendarIcon, Megaphone } from "lucide-react";
+import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut, User, Mail, Shield, Calendar as CalendarIcon, Megaphone, Settings } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -974,10 +974,51 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
                 </CardDescription>
               </CardHeader>
             </Card>
-
-
           </div>
         ) : null}
+
+        {/* Admin Panel - Exclusivo para Admin */}
+        {normalizedProfileRole === "admin" && (
+          <div className="mt-8">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-semibold mb-2 text-red-600">Área Administrativa</h2>
+              <p className="text-muted-foreground">Acesso exclusivo para administradores do sistema</p>
+            </div>
+            
+            <div className="max-w-2xl mx-auto">
+              <Card 
+                className="shadow-strong hover:shadow-xl transition-all duration-200 cursor-pointer bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:scale-105"
+                onClick={() => onNavigate("painel-admin")}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto w-16 h-16 bg-red-600 rounded-lg flex items-center justify-center mb-4">
+                    <Shield className="h-8 w-8 text-white" />
+                  </div>
+                  <CardTitle className="text-2xl text-red-800">Painel Administrativo</CardTitle>
+                  <CardDescription className="text-red-700">
+                    Gerencie usuários, visualize estatísticas e configure o sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <div className="flex justify-center gap-4 text-sm text-red-600">
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      <span>Gerenciar Usuários</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>Estatísticas</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Settings className="h-4 w-4" />
+                      <span>Configurações</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
 
         {/* Recent Activity - Filtrada por tipo de usuário */}
         {(effectiveRole === "pastor" || effectiveRole === "coordenador") && (

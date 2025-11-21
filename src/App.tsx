@@ -16,6 +16,7 @@ import { RelatoriosGerais } from "./pages/RelatoriosGerais";
 import { AgendaCompleta } from "./pages/AgendaCompleta";
 import { GestaoGeral } from "./pages/GestaoGeral";
 import { Avisos } from "./pages/Avisos";
+import PainelAdmin from "./pages/PainelAdmin";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,11 @@ function AppRoutes() {
       <Route path="/avisos" element={
         <ProtectedRoute>
           <Avisos onBack={() => navigate("/")} />
+        </ProtectedRoute>
+      } />
+      <Route path="/painel-admin" element={
+        <ProtectedRoute>
+          <PainelAdmin />
         </ProtectedRoute>
       } />
       <Route path="/diagnostic" element={<DiagnosticPage />} />

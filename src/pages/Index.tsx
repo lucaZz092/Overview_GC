@@ -36,7 +36,7 @@ const Index = () => {
 
   const handleNavigate = (page: string) => {
     // Páginas que usam React Router
-    const routerPages = ["relatorios-gerais", "agenda-completa", "gestao-geral", "avisos"];
+    const routerPages = ["relatorios-gerais", "agenda-completa", "gestao-geral", "avisos", "painel-admin"];
     
     if (routerPages.includes(page)) {
       navigate(`/${page}`);
