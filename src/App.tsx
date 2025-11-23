@@ -17,6 +17,7 @@ import { AgendaCompleta } from "./pages/AgendaCompleta";
 import { GestaoGeral } from "./pages/GestaoGeral";
 import { Avisos } from "./pages/Avisos";
 import PainelAdmin from "./pages/PainelAdmin";
+import { ControleEncontros } from "./pages/ControleEncontros";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,11 @@ function AppRoutes() {
       <Route path="/painel-admin" element={
         <ProtectedRoute>
           <PainelAdmin />
+        </ProtectedRoute>
+      } />
+      <Route path="/controle-encontros" element={
+        <ProtectedRoute>
+          <ControleEncontros onBack={() => navigate("/")} />
         </ProtectedRoute>
       } />
       <Route path="/diagnostic" element={<DiagnosticPage />} />

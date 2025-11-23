@@ -911,6 +911,21 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
                   </CardDescription>
                 </CardHeader>
               </Card>
+
+              <Card 
+                className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+                onClick={() => onNavigate("controle-encontros")}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <CalendarIcon className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle>Controle de Encontros</CardTitle>
+                  <CardDescription>
+                    Acompanhe os registros de todos os GC's
+                  </CardDescription>
+                </CardHeader>
+              </Card>
             </div>
           </div>
         ) : effectiveRole === "pastor" || effectiveRole === "coordenador" ? (
@@ -971,6 +986,21 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
                 </CardTitle>
                 <CardDescription>
                   Gerenciar mensagens para líderes
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card 
+              className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
+              onClick={() => onNavigate("controle-encontros")}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarIcon className="h-5 w-5 text-primary" />
+                  Controle de Encontros
+                </CardTitle>
+                <CardDescription>
+                  Acompanhe os registros de todos os GC's
                 </CardDescription>
               </CardHeader>
             </Card>
