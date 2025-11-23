@@ -66,7 +66,8 @@ export const useAuth = () => {
       email,
       password,
       options: {
-        data: metadata
+        data: metadata,
+        emailRedirectTo: undefined, // Não redirecionar por email
       }
     })
     if (error) throw error
