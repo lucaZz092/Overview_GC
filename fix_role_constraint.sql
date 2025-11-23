@@ -12,7 +12,7 @@ DROP CONSTRAINT IF EXISTS users_role_check;
 -- PASSO 2: Adicionar novo constraint com todos os valores aceitos
 ALTER TABLE public.users 
 ADD CONSTRAINT users_role_check 
-CHECK (role IN ('admin', 'pastor', 'leader', 'co_leader'));
+CHECK (role IN ('admin', 'pastor', 'coordinator', 'leader', 'co_leader'));
 
 -- ============================================
 -- VERIFICAR SE ESTÁ CORRETO
