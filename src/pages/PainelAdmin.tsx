@@ -226,47 +226,22 @@ export default function PainelAdmin() {
     setCreating(true);
 
     try {
-      // Criar usuário no Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newUserEmail,
-        password: newUserPassword,
-        options: {
-          data: {
-            name: newUserName,
-          }
-        }
+      // Usar RPC para criar usuário via função SQL (bypassa RLS e não envia email)
+      const { data: rpcData, error: rpcError } = await supabase.rpc('create_user_admin', {
+        p_email: newUserEmail,
+        p_password: newUserPassword,
+        p_name: newUserName,
+        p_role: newUserRole,
+        p_phone: newUserPhone || null,
+        p_grupo_crescimento: ((newUserRole === 'leader' || newUserRole === 'co_leader') && newUserGC) ? newUserGC : null
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Erro ao criar usuário');
-
-      // Criar registro na tabela users
-      const userData: any = {
-        id: authData.user.id,
-        email: newUserEmail,
-        name: newUserName,
-        role: newUserRole,
-      };
-
-      // Adicionar phone apenas se estiver preenchido
-      if (newUserPhone) {
-        userData.phone = newUserPhone;
-      }
-
-      // Adicionar GC apenas para líderes e co-líderes
-      if ((newUserRole === 'leader' || newUserRole === 'co_leader') && newUserGC) {
-        userData.grupo_crescimento = newUserGC;
-      }
-
-      const { error: userError } = await supabase
-        .from('users')
-        .insert([userData]);
-
-      if (userError) throw userError;
+      if (rpcError) throw rpcError;
+      if (!rpcData?.success) throw new Error(rpcData?.message || 'Erro ao criar usuário');
 
       toast({
         title: "Sucesso!",
-        description: `Usuário ${newUserName} criado com sucesso. Um email de confirmação foi enviado.`,
+        description: `Usuário ${newUserName} criado com sucesso.`,
       });
 
       // Limpar formulário e fechar dialog

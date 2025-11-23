@@ -8,71 +8,40 @@ DROP POLICY IF EXISTS "Admins can insert users" ON public.users;
 DROP POLICY IF EXISTS "Admins can update all users" ON public.users;
 DROP POLICY IF EXISTS "Admins can delete users" ON public.users;
 DROP POLICY IF EXISTS "Enable insert for authenticated users during signup" ON public.users;
+DROP POLICY IF EXISTS "Allow select for authenticated users" ON public.users;
+DROP POLICY IF EXISTS "Allow insert for authenticated users" ON public.users;
+DROP POLICY IF EXISTS "Allow update own profile" ON public.users;
+DROP POLICY IF EXISTS "Allow delete for service role only" ON public.users;
 
--- Policy: Permitir que usuários vejam seu próprio perfil
-CREATE POLICY "Users can view their own profile"
+-- Policy: Permitir que todos vejam todos os usuários (simplificado para evitar recursão)
+CREATE POLICY "Allow select for authenticated users"
   ON public.users
   FOR SELECT
-  USING (auth.uid() = id);
+  TO authenticated
+  USING (true);
 
--- Policy: Permitir que admins vejam todos os usuários
-CREATE POLICY "Admins can view all users"
-  ON public.users
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE users.id = auth.uid()
-      AND users.role = 'admin'
-    )
-  );
-
--- Policy: Permitir inserção durante o signup (CRÍTICO)
-CREATE POLICY "Enable insert for authenticated users during signup"
+-- Policy: Permitir inserção para usuários autenticados (signup e admin)
+CREATE POLICY "Allow insert for authenticated users"
   ON public.users
   FOR INSERT
-  WITH CHECK (
-    -- Permitir se o usuário está inserindo seu próprio registro (signup)
-    auth.uid() = id
-    OR
-    -- Permitir se um admin está criando o usuário
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE users.id = auth.uid()
-      AND users.role = 'admin'
-    )
-  );
+  TO authenticated
+  WITH CHECK (true);
 
 -- Policy: Permitir que usuários atualizem seu próprio perfil
-CREATE POLICY "Users can update their own profile"
+CREATE POLICY "Allow update own profile"
   ON public.users
   FOR UPDATE
+  TO authenticated
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
--- Policy: Permitir que admins atualizem qualquer usuário
-CREATE POLICY "Admins can update all users"
-  ON public.users
-  FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE users.id = auth.uid()
-      AND users.role = 'admin'
-    )
-  );
-
--- Policy: Permitir que admins deletem usuários
-CREATE POLICY "Admins can delete users"
+-- Policy: Permitir DELETE apenas via funções SECURITY DEFINER
+-- (A função create_user_admin pode deletar se necessário)
+CREATE POLICY "Allow delete for service role only"
   ON public.users
   FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE users.id = auth.uid()
-      AND users.role = 'admin'
-    )
-  );
+  TO authenticated
+  USING (false); -- Não permite DELETE direto, apenas via funções
 
 -- Verificar políticas criadas
 SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual
