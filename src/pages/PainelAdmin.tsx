@@ -45,9 +45,19 @@ export default function PainelAdmin() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
+  
+  // Estados para criar novo usuário
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState("");
+  const [newUserGC, setNewUserGC] = useState("");
+  const [newUserPhone, setNewUserPhone] = useState("");
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -167,6 +177,103 @@ export default function PainelAdmin() {
         description: error.message || "Não foi possível atualizar o usuário",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleCreateUser = async () => {
+    // Validações
+    if (!newUserName || !newUserEmail || !newUserPassword || !newUserRole) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if ((newUserRole === 'leader' || newUserRole === 'co_leader') && !newUserGC) {
+      toast({
+        title: "Erro",
+        description: "Selecione o Grupo de Crescimento",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar senha forte
+    if (newUserPassword.length < 8 || 
+        !/[A-Z]/.test(newUserPassword) || 
+        !/[0-9]/.test(newUserPassword) || 
+        !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newUserPassword)) {
+      toast({
+        title: "Senha fraca",
+        description: "A senha deve ter no mínimo 8 caracteres, incluindo letra maiúscula, número e símbolo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCreating(true);
+
+    try {
+      // Criar usuário no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newUserEmail,
+        password: newUserPassword,
+        options: {
+          data: {
+            name: newUserName,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Erro ao criar usuário');
+
+      // Criar registro na tabela users
+      const userData: any = {
+        id: authData.user.id,
+        email: newUserEmail,
+        name: newUserName,
+        role: newUserRole,
+        phone: newUserPhone || null,
+      };
+
+      if ((newUserRole === 'leader' || newUserRole === 'co_leader') && newUserGC) {
+        userData.grupo_crescimento = newUserGC;
+      }
+
+      const { error: userError } = await supabase
+        .from('users')
+        .insert([userData]);
+
+      if (userError) throw userError;
+
+      toast({
+        title: "Sucesso!",
+        description: `Usuário ${newUserName} criado com sucesso. Um email de confirmação foi enviado.`,
+      });
+
+      // Limpar formulário e fechar dialog
+      setNewUserName("");
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserRole("");
+      setNewUserGC("");
+      setNewUserPhone("");
+      setIsCreateDialogOpen(false);
+      
+      // Recarregar dados
+      loadData();
+    } catch (error: any) {
+      console.error("Erro ao criar usuário:", error);
+      toast({
+        title: "Erro ao criar usuário",
+        description: error.message || "Não foi possível criar o usuário",
+        variant: "destructive",
+      });
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -386,7 +493,10 @@ export default function PainelAdmin() {
                       Visualize, edite e gerencie todos os usuários do sistema
                     </CardDescription>
                   </div>
-                  <Button className="gap-2">
+                  <Button 
+                    className="gap-2"
+                    onClick={() => setIsCreateDialogOpen(true)}
+                  >
                     <UserPlus className="h-4 w-4" />
                     Novo Usuário
                   </Button>
@@ -695,6 +805,150 @@ export default function PainelAdmin() {
             </Button>
             <Button variant="destructive" onClick={handleDeleteUser}>
               Excluir Permanentemente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Criar Usuário */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Criar Novo Usuário
+            </DialogTitle>
+            <DialogDescription>
+              Preencha os dados para criar um novo usuário no sistema
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="create-name">Nome Completo *</Label>
+              <Input
+                id="create-name"
+                value={newUserName}
+                onChange={(e) => setNewUserName(e.target.value)}
+                placeholder="Digite o nome completo"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="create-email">Email *</Label>
+              <div className="flex gap-2">
+                <Mail className="h-5 w-5 text-gray-400 mt-2" />
+                <Input
+                  id="create-email"
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="create-password">Senha *</Label>
+              <Input
+                id="create-password"
+                type="password"
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                placeholder="Mínimo 8 caracteres, maiúscula, número e símbolo"
+              />
+              <p className="text-xs text-gray-500">
+                A senha deve ter no mínimo 8 caracteres, incluindo letra maiúscula, número e símbolo
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="create-phone">Telefone</Label>
+              <div className="flex gap-2">
+                <Phone className="h-5 w-5 text-gray-400 mt-2" />
+                <Input
+                  id="create-phone"
+                  value={newUserPhone}
+                  onChange={(e) => setNewUserPhone(e.target.value)}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="create-role">Cargo *</Label>
+              <Select
+                value={newUserRole}
+                onValueChange={setNewUserRole}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o cargo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="pastor">Pastor</SelectItem>
+                  <SelectItem value="coordenador">Coordenador</SelectItem>
+                  <SelectItem value="leader">Líder</SelectItem>
+                  <SelectItem value="co_leader">Co-Líder</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(newUserRole === 'leader' || newUserRole === 'co_leader') && (
+              <div className="space-y-2">
+                <Label htmlFor="create-gc">Grupo de Crescimento *</Label>
+                <Select
+                  value={newUserGC}
+                  onValueChange={setNewUserGC}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o GC" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gc-legacy-faith">GC Legacy Faith</SelectItem>
+                    <SelectItem value="gc-legacy-awake">GC Legacy Awake</SelectItem>
+                    <SelectItem value="gc-legacy-kairos">GC Legacy Kairós</SelectItem>
+                    <SelectItem value="gc-legacy-revival">GC Legacy Revival</SelectItem>
+                    <SelectItem value="gc-legacy-chosen">GC Legacy Chosen</SelectItem>
+                    <SelectItem value="gc-legacy-overflow">GC Legacy Overflow</SelectItem>
+                    <SelectItem value="gc-legacy-rise">GC Legacy Rise</SelectItem>
+                    <SelectItem value="gc-legacy-arrow">GC Legacy Arrow</SelectItem>
+                    <SelectItem value="gc-legacy-renew">GC Legacy Renew</SelectItem>
+                    <SelectItem value="gc-legacy-trinity">GC Legacy Trinity</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Importante</AlertTitle>
+              <AlertDescription>
+                Um email de confirmação será enviado para o usuário. Ele precisará confirmar o email antes de fazer login.
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsCreateDialogOpen(false);
+                setNewUserName("");
+                setNewUserEmail("");
+                setNewUserPassword("");
+                setNewUserRole("");
+                setNewUserGC("");
+                setNewUserPhone("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCreateUser}
+              disabled={creating}
+            >
+              {creating ? "Criando..." : "Criar Usuário"}
             </Button>
           </DialogFooter>
         </DialogContent>
