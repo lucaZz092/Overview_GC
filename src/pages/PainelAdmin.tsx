@@ -149,15 +149,25 @@ export default function PainelAdmin() {
     if (!editingUser) return;
 
     try {
+      // Preparar dados para atualização
+      const updateData: any = {
+        name: editingUser.name,
+        email: editingUser.email,
+        role: editingUser.role,
+      };
+
+      // Adicionar campos opcionais apenas se existirem
+      if (editingUser.phone !== undefined) {
+        updateData.phone = editingUser.phone || null;
+      }
+      
+      if (editingUser.grupo_crescimento !== undefined) {
+        updateData.grupo_crescimento = editingUser.grupo_crescimento || null;
+      }
+
       const { error } = await (supabase as any)
         .from('users')
-        .update({
-          name: editingUser.name,
-          email: editingUser.email,
-          role: editingUser.role,
-          phone: editingUser.phone,
-          grupo_crescimento: editingUser.grupo_crescimento,
-        })
+        .update(updateData)
         .eq('id', editingUser.id);
 
       if (error) throw error;
@@ -236,9 +246,14 @@ export default function PainelAdmin() {
         email: newUserEmail,
         name: newUserName,
         role: newUserRole,
-        phone: newUserPhone || null,
       };
 
+      // Adicionar phone apenas se estiver preenchido
+      if (newUserPhone) {
+        userData.phone = newUserPhone;
+      }
+
+      // Adicionar GC apenas para líderes e co-líderes
       if ((newUserRole === 'leader' || newUserRole === 'co_leader') && newUserGC) {
         userData.grupo_crescimento = newUserGC;
       }
