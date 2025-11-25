@@ -113,7 +113,7 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
         const { data, error } = await supabase
           .from('members')
           .select('id, name, email, phone, is_active')
-          .eq('gc_code', profile.grupo_crescimento)
+          .eq('grupo_crescimento', profile.grupo_crescimento)
           .eq('is_active', true)
           .order('name');
 
