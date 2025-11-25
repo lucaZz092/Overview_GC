@@ -70,7 +70,8 @@ export function RegistroMembro({ onBack }: RegistroMembroProps) {
         birth_date: formData.dataAniversario || null,
         joined_date: new Date().toISOString().split('T')[0], // Data atual
         user_id: user.id,
-        is_active: true
+        is_active: true,
+        grupo_crescimento: profile.grupo_crescimento
       };
 
 
