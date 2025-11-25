@@ -4,11 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
-import { Users, Eye, EyeOff, CheckCircle2, XCircle } from "lucide-react";
+import { Users, Eye, EyeOff, CheckCircle2, XCircle, Check, ChevronsUpDown } from "lucide-react";
 import { Footer } from "@/components/Footer";
+import { cn } from "@/lib/utils";
 
 interface RegistroProps {
   onRegister: (userType: string) => void;
@@ -32,6 +35,7 @@ export function RegistroUser({ onRegister }: RegistroProps) {
   const [userGC, setUserGC] = useState("");
   const [userType, setUserType] = useState("");
   const [loading, setLoading] = useState(false);
+  const [openGCCombobox, setOpenGCCombobox] = useState(false);
   
   const { signUp } = useAuth();
 
@@ -51,7 +55,18 @@ export function RegistroUser({ onRegister }: RegistroProps) {
 
   const passwordStrength = checkPasswordStrength(password);
 
-
+  const grupos = [
+    { value: "gc-legacy-faith", label: "GC Legacy Faith" },
+    { value: "gc-legacy-awake", label: "GC Legacy Awake" },
+    { value: "gc-legacy-kairos", label: "GC Legacy Kairós" },
+    { value: "gc-legacy-revival", label: "GC Legacy Revival" },
+    { value: "gc-legacy-chosen", label: "GC Legacy Chosen" },
+    { value: "gc-legacy-overflow", label: "GC Legacy Overflow" },
+    { value: "gc-legacy-rise", label: "GC Legacy Rise" },
+    { value: "gc-legacy-arrow", label: "GC Legacy Arrow" },
+    { value: "gc-legacy-renew", label: "GC Legacy Renew" },
+    { value: "gc-legacy-trinity", label: "GC Legacy Trinity" },
+  ];
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,23 +328,49 @@ export function RegistroUser({ onRegister }: RegistroProps) {
                       ? 'Selecione o GC que você co-lidera' 
                       : 'Selecione o GC que você lidera'}
                   </Label>
-                  <Select value={userGC} onValueChange={setUserGC} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Escolha seu Grupo de Crescimento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gc-legacy-faith">GC Legacy Faith</SelectItem>
-                      <SelectItem value="gc-legacy-awake">GC Legacy Awake</SelectItem>
-                      <SelectItem value="gc-legacy-kairos">GC Legacy Kairós</SelectItem>
-                      <SelectItem value="gc-legacy-revival">GC Legacy Revival</SelectItem>
-                      <SelectItem value="gc-legacy-chosen">GC Legacy Chosen</SelectItem>
-                      <SelectItem value="gc-legacy-overflow">GC Legacy Overflow</SelectItem>
-                      <SelectItem value="gc-legacy-rise">GC Legacy Rise</SelectItem>
-                      <SelectItem value="gc-legacy-arrow">GC Legacy Arrow</SelectItem>
-                      <SelectItem value="gc-legacy-renew">GC Legacy Renew</SelectItem>
-                      <SelectItem value="gc-legacy-trinity">GC Legacy Trinity</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Popover open={openGCCombobox} onOpenChange={setOpenGCCombobox}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openGCCombobox}
+                        className="w-full justify-between"
+                      >
+                        {userGC
+                          ? grupos.find((grupo) => grupo.value === userGC)?.label
+                          : "Escolha seu Grupo de Crescimento"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Buscar grupo..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum grupo encontrado.</CommandEmpty>
+                          <CommandGroup>
+                            {grupos.map((grupo) => (
+                              <CommandItem
+                                key={grupo.value}
+                                value={grupo.value}
+                                onSelect={(currentValue) => {
+                                  setUserGC(currentValue === userGC ? "" : currentValue);
+                                  setOpenGCCombobox(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    userGC === grupo.value ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {grupo.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               )}
 
