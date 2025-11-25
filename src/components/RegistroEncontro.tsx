@@ -5,15 +5,26 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, ArrowLeft, Users, MapPin } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, ArrowLeft, Users, MapPin, X, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Footer } from "@/components/Footer";
+import { cn } from "@/lib/utils";
 
 interface RegistroEncontroProps {
   onBack: () => void;
+}
+
+interface Member {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
 }
 
 export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
@@ -30,6 +41,10 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
   const { profile } = useUserProfile();
   const [leaders, setLeaders] = useState<{ id: string; name: string | null }[]>([]);
   const [leadersLoading, setLeadersLoading] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [openMembersCombobox, setOpenMembersCombobox] = useState(false);
+  const [membersLoading, setMembersLoading] = useState(false);
 
   useEffect(() => {
     const loadLeaders = async () => {
@@ -87,6 +102,39 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
     loadLeaders();
   }, [profile]);
 
+  // Carregar membros ativos
+  useEffect(() => {
+    const loadMembers = async () => {
+      if (!profile?.grupo_crescimento) return;
+
+      setMembersLoading(true);
+
+      try {
+        const { data, error } = await supabase
+          .from('members')
+          .select('id, name, email, phone, is_active')
+          .eq('gc_code', profile.grupo_crescimento)
+          .eq('is_active', true)
+          .order('name');
+
+        if (error) throw error;
+
+        setMembers(data || []);
+      } catch (error: any) {
+        console.error('Erro ao carregar membros:', error);
+        toast({
+          title: 'Erro ao carregar membros',
+          description: error.message || 'Não foi possível carregar a lista de membros.',
+          variant: 'destructive',
+        });
+      } finally {
+        setMembersLoading(false);
+      }
+    };
+
+    loadMembers();
+  }, [profile]);
+
   const selectedLeaderName = useMemo(() => {
     const found = leaders.find((leader) => leader.id === formData.lider);
     return found?.name || '';
@@ -136,7 +184,7 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
           description: formData.observacoes || null,
           date: dateTime.toISOString(),
           location: formData.local,
-          attendance_count: formData.presentes ? parseInt(formData.presentes) : 0,
+          attendance_count: selectedMembers.length || (formData.presentes ? parseInt(formData.presentes) : 0),
           notes: `Líder: ${selectedLeaderName}`,
           user_id: user.id
         } as any)
@@ -148,9 +196,32 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
         throw new Error(meetingError.message);
       }
 
+      // Inserir presenças dos membros selecionados
+      if (selectedMembers.length > 0 && meetingData) {
+        const attendances = selectedMembers.map(memberId => ({
+          meeting_id: (meetingData as any).id,
+          member_id: memberId,
+          was_present: true
+        }));
+
+        const { error: attendanceError } = await supabase
+          .from('meeting_attendances')
+          .insert(attendances as any);
+
+        if (attendanceError) {
+          console.error('Erro ao salvar presenças:', attendanceError);
+          // Não bloqueia o fluxo, apenas avisa
+          toast({
+            title: "Atenção",
+            description: "Encontro salvo, mas houve erro ao registrar algumas presenças.",
+            variant: "destructive",
+          });
+        }
+      }
+
       toast({
         title: "Encontro registrado!",
-        description: "O encontro foi salvo com sucesso!",
+        description: `Encontro salvo com ${selectedMembers.length} presença(s) registrada(s)!`,
       });
 
       // Reset form
@@ -162,6 +233,7 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
         presentes: "",
         observacoes: ""
       });
+      setSelectedMembers([]);
       
     } catch (error: any) {
       console.error('Erro ao registrar encontro:', error);
@@ -269,7 +341,87 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="presentes">Número de Presentes</Label>
+                  <Label>Membros Presentes</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Selecione os membros que participaram do encontro
+                  </p>
+                  <Popover open={openMembersCombobox} onOpenChange={setOpenMembersCombobox}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openMembersCombobox}
+                        className="w-full justify-between"
+                        disabled={membersLoading || members.length === 0}
+                      >
+                        {membersLoading ? (
+                          "Carregando membros..."
+                        ) : members.length === 0 ? (
+                          "Nenhum membro ativo cadastrado"
+                        ) : selectedMembers.length > 0 ? (
+                          `${selectedMembers.length} membro(s) selecionado(s)`
+                        ) : (
+                          "Selecionar membros"
+                        )}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar membro..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum membro encontrado.</CommandEmpty>
+                          <CommandGroup>
+                            {members.map((member) => {
+                              const isSelected = selectedMembers.includes(member.id);
+                              return (
+                                <CommandItem
+                                  key={member.id}
+                                  value={member.name}
+                                  onSelect={() => {
+                                    setSelectedMembers(prev =>
+                                      isSelected
+                                        ? prev.filter(id => id !== member.id)
+                                        : [...prev, member.id]
+                                    );
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      isSelected ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {member.name}
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  
+                  {selectedMembers.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedMembers.map(memberId => {
+                        const member = members.find(m => m.id === memberId);
+                        return member ? (
+                          <Badge key={memberId} variant="secondary" className="flex items-center gap-1">
+                            {member.name}
+                            <X
+                              className="h-3 w-3 cursor-pointer hover:text-destructive"
+                              onClick={() => setSelectedMembers(prev => prev.filter(id => id !== memberId))}
+                            />
+                          </Badge>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="presentes">Número de Presentes (se não selecionou membros)</Label>
                   <div className="relative">
                     <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -279,8 +431,14 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
                       value={formData.presentes}
                       onChange={(e) => handleChange("presentes", e.target.value)}
                       placeholder="Quantas pessoas participaram"
+                      disabled={selectedMembers.length > 0}
                     />
                   </div>
+                  {selectedMembers.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      O número de presentes será calculado automaticamente pelos membros selecionados
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
