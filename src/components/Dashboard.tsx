@@ -686,9 +686,15 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
       <div className="container mx-auto px-4 py-8">
         {/* Stats Grid - Específico para cada tipo de usuário */}
         {effectiveRole === "co_leader" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {coLiderStats.map((stat, index) => (
-              <Card key={index} className="shadow-soft hover:shadow-strong transition-all duration-200">
+              <Card 
+                key={index} 
+                className={`shadow-soft hover:shadow-strong transition-all duration-200 ${
+                  index === 0 ? 'cursor-pointer hover:scale-105' : ''
+                }`}
+                onClick={index === 0 ? () => onNavigate('meu-grupo') : undefined}
+              >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     {stat.title}
@@ -700,6 +706,11 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
                   <p className="text-xs text-muted-foreground">
                     {stat.description}
                   </p>
+                  {index === 0 && (
+                    <p className="text-xs text-primary mt-2">
+                      Clique para ver detalhes →
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -707,7 +718,13 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
         ) : effectiveRole === "leader" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {liderStats.map((stat, index) => (
-              <Card key={index} className="shadow-soft hover:shadow-strong transition-all duration-200">
+              <Card 
+                key={index} 
+                className={`shadow-soft hover:shadow-strong transition-all duration-200 ${
+                  index === 0 ? 'cursor-pointer hover:scale-105' : ''
+                }`}
+                onClick={index === 0 ? () => onNavigate('meu-grupo') : undefined}
+              >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     {stat.title}
@@ -719,6 +736,11 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
                   <p className="text-xs text-muted-foreground">
                     {stat.description}
                   </p>
+                  {index === 0 && (
+                    <p className="text-xs text-primary mt-2">
+                      Clique para ver detalhes →
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             ))}
