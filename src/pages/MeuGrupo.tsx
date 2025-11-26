@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Users, Calendar, TrendingUp, MapPin, Mail, Phone, UserCheck } from "lucide-react";
+import { ArrowLeft, Users, Calendar, TrendingUp, MapPin, Mail, Phone, UserCheck, Bell, AlertCircle } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -29,11 +29,21 @@ interface Meeting {
   attendance_count: number;
 }
 
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  created_at: string;
+  expires_at: string | null;
+}
+
 export function MeuGrupo({ onBack }: MeuGrupoProps) {
   const { user } = useAuthContext();
   const { profile } = useUserProfile();
   const [members, setMembers] = useState<Member[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [stats, setStats] = useState({
     membersActive: 0,
     meetingsThisMonth: 0,
@@ -41,6 +51,7 @@ export function MeuGrupo({ onBack }: MeuGrupoProps) {
     averageAttendance: 0
   });
   const [loading, setLoading] = useState(true);
+  const announcementsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadGroupData = async () => {
@@ -67,11 +78,28 @@ export function MeuGrupo({ onBack }: MeuGrupoProps) {
           .select('*')
           .eq('user_id', user?.id)
           .order('date', { ascending: false })
-          .limit(10);
+          .limit(10) as { data: Meeting[] | null, error: any };
 
         if (meetingsError) throw meetingsError;
 
         setMeetings(meetingsData || []);
+
+        // Carregar avisos ativos
+        const userRole = profile.role;
+        const { data: announcementsData, error: announcementsError } = await supabase
+          .from('announcements')
+          .select('*')
+          .eq('is_active', true)
+          .or(`target_roles.cs.{${userRole}}`)
+          .order('created_at', { ascending: false });
+
+        if (!announcementsError) {
+          const activeAnnouncements = (announcementsData || []).filter(announcement => {
+            if (!announcement.expires_at) return true;
+            return new Date(announcement.expires_at) > new Date();
+          });
+          setAnnouncements(activeAnnouncements);
+        }
 
         // Calcular estatísticas
         const now = new Date();
@@ -113,26 +141,78 @@ export function MeuGrupo({ onBack }: MeuGrupoProps) {
       .join(' ');
   };
 
+  const scrollToAnnouncements = () => {
+    announcementsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return 'destructive';
+      case 'high':
+        return 'default';
+      case 'normal':
+        return 'secondary';
+      case 'low':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return 'Urgente';
+      case 'high':
+        return 'Alta';
+      case 'normal':
+        return 'Normal';
+      case 'low':
+        return 'Baixa';
+      default:
+        return priority;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-gradient-primary border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onBack}
-            className="text-white hover:bg-white/10"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-white">
-              {formatGCName(profile?.grupo_crescimento)}
-            </h1>
-            <p className="text-white/80">Detalhes do seu grupo de crescimento</p>
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onBack}
+              className="text-white hover:bg-white/10"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-white">
+                {formatGCName(profile?.grupo_crescimento)}
+              </h1>
+              <p className="text-white/80">Detalhes do seu grupo de crescimento</p>
+            </div>
           </div>
+          
+          {/* Botão de Avisos */}
+          {announcements.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={scrollToAnnouncements}
+              className="text-white hover:bg-white/10 relative"
+            >
+              <Bell className="h-4 w-4 mr-2" />
+              Avisos
+              <Badge variant="destructive" className="ml-2 px-2 py-0.5 text-xs">
+                {announcements.length}
+              </Badge>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -304,6 +384,57 @@ export function MeuGrupo({ onBack }: MeuGrupoProps) {
             </CardContent>
           </Card>
         </div>
+
+        {/* Seção de Avisos */}
+        {announcements.length > 0 && (
+          <div ref={announcementsRef} className="mt-8">
+            <Card className="shadow-strong">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-primary" />
+                  Avisos Importantes ({announcements.length})
+                </CardTitle>
+                <CardDescription>
+                  Comunicados da liderança para você
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {announcements.map((announcement) => (
+                    <Card key={announcement.id} className="border-l-4 border-l-primary">
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <CardTitle className="text-lg">{announcement.title}</CardTitle>
+                              <Badge variant={getPriorityColor(announcement.priority)}>
+                                {getPriorityLabel(announcement.priority)}
+                              </Badge>
+                            </div>
+                            <CardDescription>
+                              Publicado em {new Date(announcement.created_at).toLocaleDateString('pt-BR')}
+                              {announcement.expires_at && (
+                                <> • Válido até {new Date(announcement.expires_at).toLocaleDateString('pt-BR')}</>
+                              )}
+                            </CardDescription>
+                          </div>
+                          {announcement.priority === 'urgent' && (
+                            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                          {announcement.content}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <Footer />
       </div>
