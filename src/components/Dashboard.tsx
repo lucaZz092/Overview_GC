@@ -851,21 +851,6 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
                 </CardHeader>
               </Card>
 
-              <Card
-                className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
-                onClick={() => onNavigate("meus-relatorios")}
-              >
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                    <Eye className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle>Meus Relatórios</CardTitle>
-                  <CardDescription>
-                    Relatórios dos grupos sob sua liderança
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
               <Card 
                 className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
                 onClick={() => onNavigate("proximos-encontros")}
@@ -892,21 +877,6 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
                   <CardTitle>Meus Grupos</CardTitle>
                   <CardDescription>
                     Gerencie seus grupos de crescimento
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
-              <Card 
-                className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
-                onClick={() => onNavigate("controle-encontros")}
-              >
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                    <CalendarIcon className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle>Controle de Encontros</CardTitle>
-                  <CardDescription>
-                    Acompanhe os registros de todos os GC's
                   </CardDescription>
                 </CardHeader>
               </Card>
