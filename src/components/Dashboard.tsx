@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut, User, Mail, Shield, Calendar as CalendarIcon, Megaphone, Settings, Bell } from "lucide-react";
+import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut, User, Mail, Shield, Calendar as CalendarIcon, Megaphone, Settings, Bell, AlertCircle } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -61,6 +61,15 @@ interface LeaderActivityEntry {
   gc_code: string | null;
 }
 
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  created_at: string;
+  expires_at: string | null;
+}
+
 export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: DashboardProps) {
   const { user } = useAuthContext();
   const { profile, loading: profileLoading, error: profileError } = useUserProfile();
@@ -75,6 +84,8 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
   const [leaderActivities, setLeaderActivities] = useState<LeaderActivityEntry[]>([]);
   const [leaderActivitiesLoading, setLeaderActivitiesLoading] = useState(false);
   const [leaderActivitiesError, setLeaderActivitiesError] = useState<string | null>(null);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const announcementsRef = useRef<HTMLDivElement>(null);
 
   const normalizedProfileRole = normalizeRole(profile?.role);
   const normalizedUserType = normalizeRole(userType);
@@ -232,6 +243,68 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
 
     fetchRealData();
   }, [user, effectiveRole, profile?.grupo_crescimento, profile?.name]);
+
+  // Carregar avisos
+  useEffect(() => {
+    const loadAnnouncements = async () => {
+      if (!effectiveRole) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('announcements')
+          .select('*')
+          .eq('is_active', true)
+          .or(`target_roles.cs.{${effectiveRole}}`)
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          const activeAnnouncements = data.filter(announcement => {
+            if (!announcement.expires_at) return true;
+            return new Date(announcement.expires_at) > new Date();
+          });
+          setAnnouncements(activeAnnouncements);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar avisos:", error);
+      }
+    };
+
+    loadAnnouncements();
+  }, [effectiveRole]);
+
+  const scrollToAnnouncements = () => {
+    announcementsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return 'destructive';
+      case 'high':
+        return 'default';
+      case 'normal':
+        return 'secondary';
+      case 'low':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return 'Urgente';
+      case 'high':
+        return 'Alta';
+      case 'normal':
+        return 'Normal';
+      case 'low':
+        return 'Baixa';
+      default:
+        return priority;
+    }
+  };
 
   // Função para formatar o nome do GC para exibição
   const formatGCName = (gcCode: string | undefined) => {
@@ -642,16 +715,19 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
           </div>
           <div className="flex items-center gap-4">
             {getUserBadge()}
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="text-white hover:bg-white/10 p-2 relative"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs flex items-center justify-center text-white">
-                0
-              </span>
-            </Button>
+            {announcements.length > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={scrollToAnnouncements}
+                className="text-white hover:bg-white/10 p-2 relative"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs flex items-center justify-center text-white">
+                  {announcements.length}
+                </span>
+              </Button>
+            )}
             <UserDropdown />
           </div>
         </div>
@@ -1160,164 +1236,56 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
         )}
 
         {/* Avisos para líderes e co-líderes */}
-        {(effectiveRole === "leader" || effectiveRole === "co_leader") && (
-          <AnnouncementsSection role={effectiveRole} />
+        {(effectiveRole === "leader" || effectiveRole === "co_leader") && announcements.length > 0 && (
+          <div ref={announcementsRef} className="mt-8 space-y-4">
+            <h3 className="text-xl font-semibold flex items-center gap-2">
+              📢 Avisos e Comunicados
+            </h3>
+            {announcements.map((announcement) => (
+              <Card 
+                key={announcement.id} 
+                className="shadow-soft bg-gradient-card border-l-4"
+                style={{
+                  borderLeftColor: 
+                    announcement.priority === 'urgent' ? '#ef4444' : 
+                    announcement.priority === 'high' ? '#f97316' : 
+                    '#3b82f6'
+                }}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        {announcement.priority === 'urgent' && <AlertCircle className="h-5 w-5 text-red-500" />}
+                        <CardTitle className="text-lg">{announcement.title}</CardTitle>
+                        <Badge variant={getPriorityColor(announcement.priority)}>
+                          {getPriorityLabel(announcement.priority)}
+                        </Badge>
+                      </div>
+                      <CardDescription className="text-xs">
+                        {new Date(announcement.created_at).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                        {announcement.expires_at && (
+                          <> • Válido até {new Date(announcement.expires_at).toLocaleDateString('pt-BR')}</>
+                        )}
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm whitespace-pre-wrap">{announcement.content}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
       <Footer />
-    </div>
-  );
-}
-
-// Componente para exibir avisos
-function AnnouncementsSection({ role }: { role: string }) {
-  const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadAnnouncements();
-  }, [role]);
-
-  const loadAnnouncements = async () => {
-    try {
-      setLoading(true);
-      console.log('📢 Dashboard: Carregando avisos para papel:', role);
-      
-      // Buscar todos os avisos ativos
-      const { data, error } = await supabase
-        .from('announcements')
-        .select('*')
-        .eq('is_active', true)
-        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
-
-      if (error) {
-        console.error('❌ Dashboard: Erro ao buscar avisos:', error);
-        throw error;
-      }
-
-      console.log('📊 Dashboard: Avisos encontrados:', data?.length || 0);
-
-      // Filtrar avisos que incluem o papel atual nos target_roles
-      const filteredData = (data as any[])?.filter((announcement: any) => 
-        announcement.target_roles && announcement.target_roles.includes(role)
-      ) || [];
-
-      console.log('🔍 Dashboard: Avisos filtrados para', role, ':', filteredData.length);
-
-      // Ordenar por prioridade e data
-      const sortedData = filteredData.sort((a: any, b: any) => {
-        const priorityOrder: any = { urgent: 4, high: 3, normal: 2, low: 1 };
-        const priorityDiff = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
-        if (priorityDiff !== 0) return priorityDiff;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-
-      setAnnouncements(sortedData.slice(0, 3));
-      console.log('✅ Dashboard: Avisos carregados com sucesso');
-    } catch (error) {
-      console.error('💥 Dashboard: Erro fatal ao carregar avisos:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'urgent':
-        return <span className="text-red-500">🔴</span>;
-      case 'high':
-        return <span className="text-orange-500">🟠</span>;
-      default:
-        return <span className="text-blue-500">🔵</span>;
-    }
-  };
-
-  const getPriorityLabel = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'Urgente';
-      case 'high': return 'Importante';
-      case 'normal': return 'Normal';
-      case 'low': return 'Informativo';
-      default: return 'Normal';
-    }
-  };
-
-  if (loading) {
-    return (
-      <Card className="mt-8 shadow-soft bg-gradient-card">
-        <CardContent className="pt-6">
-          <div className="text-center">
-            <p className="text-muted-foreground">Carregando avisos...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (announcements.length === 0) {
-    return (
-      <Card className="mt-8 shadow-soft bg-gradient-card">
-        <CardContent className="pt-6">
-          <div className="text-center">
-            <h3 className="text-lg font-semibold mb-2">📢 Avisos e Comunicados</h3>
-            <p className="text-muted-foreground">
-              Nenhum aviso no momento. Fique atento às atualizações da liderança!
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="mt-8 space-y-4">
-      <h3 className="text-xl font-semibold flex items-center gap-2">
-        📢 Avisos e Comunicados
-      </h3>
-      {announcements.map((announcement) => (
-        <Card 
-          key={announcement.id} 
-          className="shadow-soft bg-gradient-card border-l-4"
-          style={{
-            borderLeftColor: 
-              announcement.priority === 'urgent' ? '#ef4444' : 
-              announcement.priority === 'high' ? '#f97316' : 
-              '#3b82f6'
-          }}
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  {getPriorityIcon(announcement.priority)}
-                  <CardTitle className="text-lg">{announcement.title}</CardTitle>
-                  <Badge 
-                    variant="secondary" 
-                    className={
-                      announcement.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                      announcement.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                      'bg-blue-100 text-blue-700'
-                    }
-                  >
-                    {getPriorityLabel(announcement.priority)}
-                  </Badge>
-                </div>
-                <CardDescription className="text-xs">
-                  {new Date(announcement.created_at).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: 'long',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm whitespace-pre-wrap">{announcement.content}</p>
-          </CardContent>
-        </Card>
-      ))}
     </div>
   );
 }
