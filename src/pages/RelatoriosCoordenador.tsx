@@ -11,7 +11,11 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  MapPin
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Footer } from "@/components/Footer";
@@ -43,6 +47,9 @@ interface MeetingRecord {
   attendance_count: number;
   leader_name: string;
   gc_name: string;
+  description?: string | null;
+  notes?: string | null;
+  attendees?: string[];
 }
 
 export function RelatoriosCoordenador({ onBack }: { onBack: () => void }) {
@@ -51,6 +58,7 @@ export function RelatoriosCoordenador({ onBack }: { onBack: () => void }) {
   const [memberAttendance, setMemberAttendance] = useState<MemberAttendance[]>([]);
   const [recentMeetings, setRecentMeetings] = useState<MeetingRecord[]>([]);
   const [activeTab, setActiveTab] = useState("membros");
+  const [expandedMeetingId, setExpandedMeetingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadAllData();
@@ -254,6 +262,8 @@ export function RelatoriosCoordenador({ onBack }: { onBack: () => void }) {
           date,
           location,
           attendance_count,
+          description,
+          notes,
           user_id,
           profiles:user_id (name, grupo_crescimento)
         `)
@@ -262,17 +272,36 @@ export function RelatoriosCoordenador({ onBack }: { onBack: () => void }) {
 
       if (error) throw error;
 
-      const meetings: MeetingRecord[] = (data || []).map((meeting: any) => ({
-        id: meeting.id,
-        title: meeting.title,
-        date: meeting.date,
-        location: meeting.location,
-        attendance_count: meeting.attendance_count || 0,
-        leader_name: meeting.profiles?.name || 'Desconhecido',
-        gc_name: meeting.profiles?.grupo_crescimento || 'Não definido'
-      }));
+      // Buscar membros presentes em cada encontro
+      const meetingsWithAttendees = await Promise.all(
+        (data || []).map(async (meeting: any) => {
+          const { data: attendancesData } = await supabase
+            .from('meeting_attendances')
+            .select(`
+              members:member_id (
+                name
+              )
+            `)
+            .eq('meeting_id', meeting.id);
 
-      setRecentMeetings(meetings);
+          const attendees = attendancesData?.map((attendance: any) => attendance.members?.name).filter(Boolean) || [];
+
+          return {
+            id: meeting.id,
+            title: meeting.title,
+            date: meeting.date,
+            location: meeting.location,
+            attendance_count: meeting.attendance_count || 0,
+            description: meeting.description,
+            notes: meeting.notes,
+            leader_name: meeting.profiles?.name || 'Desconhecido',
+            gc_name: meeting.profiles?.grupo_crescimento || 'Não definido',
+            attendees
+          };
+        })
+      );
+
+      setRecentMeetings(meetingsWithAttendees);
     } catch (error) {
       console.error("Erro ao carregar encontros recentes:", error);
     }
@@ -429,29 +458,104 @@ export function RelatoriosCoordenador({ onBack }: { onBack: () => void }) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {recentMeetings.map((meeting) => (
-                    <Card key={meeting.id} className="border-l-4 border-l-blue-500">
-                      <CardContent className="pt-4 pb-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-semibold mb-1">{meeting.title}</h4>
-                            <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {formatDate(meeting.date)}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Users className="h-3 w-3" />
-                                {meeting.attendance_count} presentes
-                              </span>
-                              <Badge variant="outline">{meeting.gc_name}</Badge>
-                              <span className="text-xs">Líder: {meeting.leader_name}</span>
+                  {recentMeetings.map((meeting) => {
+                    const isExpanded = expandedMeetingId === meeting.id;
+                    return (
+                      <Card key={meeting.id} className="border-l-4 border-l-blue-500">
+                        <CardContent className="pt-4 pb-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <h4 className="font-semibold mb-1">{meeting.title}</h4>
+                              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatDate(meeting.date)}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {meeting.location}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  {meeting.attendance_count} presentes
+                                </span>
+                                <Badge variant="outline">{meeting.gc_name}</Badge>
+                                <span className="text-xs">Líder: {meeting.leader_name}</span>
+                              </div>
                             </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setExpandedMeetingId(isExpanded ? null : meeting.id)}
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronUp className="h-4 w-4 mr-1" />
+                                  Ocultar
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="h-4 w-4 mr-1" />
+                                  Detalhes
+                                </>
+                              )}
+                            </Button>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+
+                          {/* Detalhes expandidos */}
+                          {isExpanded && (
+                            <div className="mt-4 space-y-3 pt-3 border-t">
+                              {meeting.description && (
+                                <div>
+                                  <h5 className="text-sm font-medium mb-1 flex items-center gap-1">
+                                    <FileText className="h-4 w-4 text-primary" />
+                                    Descrição:
+                                  </h5>
+                                  <p className="text-sm text-muted-foreground pl-5">
+                                    {meeting.description}
+                                  </p>
+                                </div>
+                              )}
+
+                              {meeting.notes && (
+                                <div>
+                                  <h5 className="text-sm font-medium mb-1 flex items-center gap-1">
+                                    <FileText className="h-4 w-4 text-primary" />
+                                    Observações:
+                                  </h5>
+                                  <p className="text-sm text-muted-foreground pl-5">
+                                    {meeting.notes}
+                                  </p>
+                                </div>
+                              )}
+
+                              {meeting.attendees && meeting.attendees.length > 0 && (
+                                <div>
+                                  <h5 className="text-sm font-medium mb-2 flex items-center gap-1">
+                                    <Users className="h-4 w-4 text-primary" />
+                                    Membros Presentes ({meeting.attendees.length}):
+                                  </h5>
+                                  <div className="flex flex-wrap gap-2 pl-5">
+                                    {meeting.attendees.map((attendee, index) => (
+                                      <Badge key={index} variant="secondary" className="text-xs">
+                                        {attendee}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {!meeting.description && !meeting.notes && (!meeting.attendees || meeting.attendees.length === 0) && (
+                                <p className="text-sm text-muted-foreground italic">
+                                  Nenhum detalhe adicional registrado para este encontro.
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                   {recentMeetings.length === 0 && (
                     <p className="text-center text-muted-foreground py-8">
                       Nenhum encontro registrado
