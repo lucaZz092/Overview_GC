@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut, User, Mail, Shield, Calendar as CalendarIcon, Megaphone, Settings } from "lucide-react";
+import { Users, Calendar, TrendingUp, MapPin, Plus, Eye, LogOut, User, Mail, Shield, Calendar as CalendarIcon, Megaphone, Settings, Bell } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -642,6 +642,16 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
           </div>
           <div className="flex items-center gap-4">
             {getUserBadge()}
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-white hover:bg-white/10 p-2 relative"
+            >
+              <Bell className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs flex items-center justify-center text-white">
+                0
+              </span>
+            </Button>
             <UserDropdown />
           </div>
         </div>
