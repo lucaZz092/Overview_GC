@@ -32,6 +32,7 @@ interface Meeting {
   attendance_count: number;
   notes: string | null;
   created_at: string;
+  created_by_name?: string | null;
   attendees?: string[];
 }
 
@@ -312,6 +313,13 @@ export const EncontrosRegistrados: React.FC<EncontrosRegistradosProps> = ({ onBa
                           <span>{meeting.attendance_count} presentes</span>
                         </div>
                       </div>
+                      
+                      {/* Registrado por */}
+                      {meeting.created_by_name && (
+                        <div className="mt-2 text-xs text-gray-500 italic">
+                          Registrado por: {meeting.created_by_name}
+                        </div>
+                      )}
                       
                       {/* Lista de membros presentes */}
                       {meeting.attendees && meeting.attendees.length > 0 && (

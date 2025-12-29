@@ -190,7 +190,8 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
           location: formData.local,
           attendance_count: totalAttendance,
           notes: `Líder: ${selectedLeaderName}`,
-          user_id: user.id
+          user_id: user.id,
+          created_by_name: profile?.name || user.email || 'Usuário desconhecido'
         } as any)
         .select()
         .single();

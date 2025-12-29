@@ -47,6 +47,7 @@ interface MeetingRecord {
   attendance_count: number;
   leader_name: string;
   gc_name: string;
+  created_by_name?: string | null;
   description?: string | null;
   notes?: string | null;
   attendees?: string[];
@@ -264,6 +265,7 @@ export function RelatoriosCoordenador({ onBack }: { onBack: () => void }) {
           attendance_count,
           description,
           notes,
+          created_by_name,
           user_id,
           profiles:user_id (name, grupo_crescimento)
         `)
@@ -294,6 +296,7 @@ export function RelatoriosCoordenador({ onBack }: { onBack: () => void }) {
             attendance_count: meeting.attendance_count || 0,
             description: meeting.description,
             notes: meeting.notes,
+            created_by_name: meeting.created_by_name,
             leader_name: meeting.profiles?.name || 'Desconhecido',
             gc_name: meeting.profiles?.grupo_crescimento || 'Não definido',
             attendees
@@ -505,6 +508,17 @@ export function RelatoriosCoordenador({ onBack }: { onBack: () => void }) {
                           {/* Detalhes expandidos */}
                           {isExpanded && (
                             <div className="mt-4 space-y-3 pt-3 border-t">
+                              {meeting.created_by_name && (
+                                <div>
+                                  <h5 className="text-xs font-medium text-muted-foreground mb-1">
+                                    Registrado por:
+                                  </h5>
+                                  <p className="text-sm pl-0">
+                                    {meeting.created_by_name}
+                                  </p>
+                                </div>
+                              )}
+
                               {meeting.description && (
                                 <div>
                                   <h5 className="text-sm font-medium mb-1 flex items-center gap-1">
@@ -545,7 +559,7 @@ export function RelatoriosCoordenador({ onBack }: { onBack: () => void }) {
                                 </div>
                               )}
 
-                              {!meeting.description && !meeting.notes && (!meeting.attendees || meeting.attendees.length === 0) && (
+                              {!meeting.created_by_name && !meeting.description && !meeting.notes && (!meeting.attendees || meeting.attendees.length === 0) && (
                                 <p className="text-sm text-muted-foreground italic">
                                   Nenhum detalhe adicional registrado para este encontro.
                                 </p>
