@@ -91,7 +91,7 @@ export function MeuGrupo({ onBack }: MeuGrupoProps) {
           .select('*')
           .eq('is_active', true)
           .or(`target_roles.cs.{${userRole}}`)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false }) as { data: Announcement[] | null, error: any };
 
         if (!announcementsError) {
           const activeAnnouncements = (announcementsData || []).filter(announcement => {
