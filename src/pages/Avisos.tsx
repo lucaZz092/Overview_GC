@@ -145,18 +145,30 @@ export function Avisos({ onBack }: AvisosProps) {
     }
 
     try {
-      const dataToSave: AnnouncementInsert = {
+      // Verificar se temos o profile ID
+      if (!profile?.id) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível identificar o usuário. Tente fazer login novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const dataToSave: any = {
         title: formData.title,
         content: formData.content,
         target_roles: formData.target_roles,
         priority: formData.priority,
         expires_at: formData.expires_at || null,
         is_active: formData.is_active,
-        created_by: profile?.id || '',
+        created_by: profile.id,
       };
 
       console.log('💾 Avisos: Tentando salvar aviso...', { 
-        editing: !!editingId, 
+        editing: !!editingId,
+        userId: profile.id,
+        userRole: profile.role,
         data: dataToSave 
       });
 
@@ -179,13 +191,19 @@ export function Avisos({ onBack }: AvisosProps) {
         });
       } else {
         console.log('➕ Avisos: Criando novo aviso...');
-        const { error, data } = await (supabase as any)
+        console.log('📋 Dados completos:', JSON.stringify(dataToSave, null, 2));
+        
+        const { error, data } = await supabase
           .from('announcements')
           .insert([dataToSave])
           .select();
 
         if (error) {
           console.error('❌ Avisos: Erro ao criar:', error);
+          console.error('❌ Mensagem:', error.message);
+          console.error('❌ Código:', error.code);
+          console.error('❌ Detalhes:', error.details);
+          console.error('❌ Hint:', error.hint);
           throw error;
         }
 
