@@ -13,6 +13,7 @@ import DiagnosticPage from "./pages/DiagnosticPage";
 import { ConfirmEmail } from "./pages/ConfirmEmail";
 import { ResetPassword } from "./pages/ResetPassword";
 import { RelatoriosGerais } from "./pages/RelatoriosGerais";
+import { RelatoriosCoordenador } from "./pages/RelatoriosCoordenador";
 import { AgendaCompleta } from "./pages/AgendaCompleta";
 import { GestaoGeral } from "./pages/GestaoGeral";
 import { Avisos } from "./pages/Avisos";
@@ -42,6 +43,11 @@ function AppRoutes() {
       <Route path="/relatorios-gerais" element={
         <ProtectedRoute>
           <RelatoriosGerais onBack={() => navigate("/")} />
+        </ProtectedRoute>
+      } />
+      <Route path="/relatorios-coordenador" element={
+        <ProtectedRoute>
+          <RelatoriosCoordenador onBack={() => navigate("/")} />
         </ProtectedRoute>
       } />
       <Route path="/agenda-completa" element={

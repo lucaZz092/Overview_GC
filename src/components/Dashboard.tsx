@@ -886,15 +886,17 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card 
               className="shadow-soft hover:shadow-strong transition-all duration-200 cursor-pointer bg-gradient-card"
-              onClick={() => onNavigate("relatorios-gerais")}
+              onClick={() => onNavigate(effectiveRole === "coordenador" ? "relatorios-coordenador" : "relatorios-gerais")}
             >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Eye className="h-5 w-5 text-primary" />
-                  Relatórios Gerais
+                  {effectiveRole === "coordenador" ? "Relatórios do Coordenador" : "Relatórios Gerais"}
                 </CardTitle>
                 <CardDescription>
-                  Relatórios de todos os grupos da igreja
+                  {effectiveRole === "coordenador" 
+                    ? "Controle de membros, encontros e faltas dos GCs" 
+                    : "Relatórios de todos os grupos da igreja"}
                 </CardDescription>
               </CardHeader>
             </Card>
