@@ -32,6 +32,7 @@ interface Meeting {
   attendance_count: number;
   notes: string | null;
   created_at: string;
+  attendees?: string[];
 }
 
 export const EncontrosRegistrados: React.FC<EncontrosRegistradosProps> = ({ onBack }) => {
@@ -67,7 +68,29 @@ export const EncontrosRegistrados: React.FC<EncontrosRegistradosProps> = ({ onBa
         const { data, error } = await query.order('date', { ascending: false });
           
         if (error) throw error;
-        setMeetings(data || []);
+        
+        // Buscar os membros presentes em cada encontro
+        const meetingsWithAttendees = await Promise.all(
+          (data || []).map(async (meeting) => {
+            const { data: attendancesData } = await supabase
+              .from('meeting_attendances')
+              .select(`
+                members:member_id (
+                  name
+                )
+              `)
+              .eq('meeting_id', meeting.id);
+
+            const attendees = attendancesData?.map((attendance: any) => attendance.members?.name).filter(Boolean) || [];
+            
+            return {
+              ...meeting,
+              attendees
+            };
+          })
+        );
+        
+        setMeetings(meetingsWithAttendees);
       } catch (err: any) {
         console.error('Erro ao carregar encontros:', err);
         setError(err.message);
@@ -289,6 +312,23 @@ export const EncontrosRegistrados: React.FC<EncontrosRegistradosProps> = ({ onBa
                           <span>{meeting.attendance_count} presentes</span>
                         </div>
                       </div>
+                      
+                      {/* Lista de membros presentes */}
+                      {meeting.attendees && meeting.attendees.length > 0 && (
+                        <div className="mt-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Users className="h-4 w-4 text-primary" />
+                            <span className="text-sm font-medium text-gray-700">Membros Presentes:</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {meeting.attendees.map((attendee, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {attendee}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <Badge variant="outline" className="ml-4">
                       {getTimeAgo(meeting.date)}
