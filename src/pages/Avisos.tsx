@@ -217,16 +217,23 @@ export function Avisos({ onBack }: AvisosProps) {
       resetForm();
       loadAnnouncements();
     } catch (error: any) {
-      console.error('Erro ao salvar aviso:', error);
-      console.error('Detalhes do erro:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
+      console.error('💥 Erro ao salvar aviso:', error);
+      console.error('💥 Tipo do erro:', typeof error);
+      console.error('💥 Erro completo (JSON):', JSON.stringify(error, null, 2));
+      console.error('💥 Stack trace:', error.stack);
+      
+      // Tentar extrair informações específicas
+      const errorMessage = error?.message || error?.msg || 'Erro desconhecido';
+      const errorCode = error?.code || error?.status || 'N/A';
+      const errorDetails = error?.details || error?.hint || 'Sem detalhes adicionais';
+      
+      console.error('📋 Mensagem:', errorMessage);
+      console.error('📋 Código:', errorCode);
+      console.error('📋 Detalhes:', errorDetails);
+      
       toast({
         title: "Erro ao salvar aviso",
-        description: error.message || error.details || "Não foi possível salvar o aviso. Verifique se a tabela foi criada no Supabase.",
+        description: `${errorMessage} (Código: ${errorCode})`,
         variant: "destructive",
       });
     }
