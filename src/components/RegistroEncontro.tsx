@@ -176,6 +176,10 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
         return;
       }
       
+      // Calcular total de presentes: membros + visitantes
+      const visitorsCount = formData.presentes ? parseInt(formData.presentes) : 0;
+      const totalAttendance = selectedMembers.length + visitorsCount;
+      
       // Inserir o encontro na tabela meetings
       const { data: meetingData, error: meetingError } = await supabase
         .from('meetings')
@@ -184,7 +188,7 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
           description: formData.observacoes || null,
           date: dateTime.toISOString(),
           location: formData.local,
-          attendance_count: selectedMembers.length || (formData.presentes ? parseInt(formData.presentes) : 0),
+          attendance_count: totalAttendance,
           notes: `Líder: ${selectedLeaderName}`,
           user_id: user.id
         } as any)
@@ -421,7 +425,7 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="presentes">Número de Presentes (se não selecionou membros)</Label>
+                  <Label htmlFor="presentes">Visitantes e Convidados (não membros)</Label>
                   <div className="relative">
                     <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -430,15 +434,13 @@ export function RegistroEncontro({ onBack }: RegistroEncontroProps) {
                       className="pl-10"
                       value={formData.presentes}
                       onChange={(e) => handleChange("presentes", e.target.value)}
-                      placeholder="Quantas pessoas participaram"
-                      disabled={selectedMembers.length > 0}
+                      placeholder="Quantos visitantes/convidados participaram"
+                      min="0"
                     />
                   </div>
-                  {selectedMembers.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      O número de presentes será calculado automaticamente pelos membros selecionados
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Informe quantos visitantes ou convidados que ainda não são membros participaram
+                  </p>
                 </div>
 
                 <div className="space-y-2">
