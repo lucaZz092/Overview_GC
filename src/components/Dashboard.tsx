@@ -250,22 +250,29 @@ export function Dashboard({ userType, onNavigate, onLogout, onRoleSelect }: Dash
       if (!effectiveRole) return;
 
       try {
+        console.log('🔔 Dashboard: Carregando avisos para role:', effectiveRole);
+        
         const { data, error } = await supabase
           .from('announcements')
           .select('*')
           .eq('is_active', true)
-          .or(`target_roles.cs.{${effectiveRole}}`)
+          .contains('target_roles', [effectiveRole])
           .order('created_at', { ascending: false });
+
+        console.log('🔔 Dashboard: Avisos retornados:', data?.length || 0, error);
 
         if (!error && data) {
           const activeAnnouncements = data.filter(announcement => {
             if (!announcement.expires_at) return true;
             return new Date(announcement.expires_at) > new Date();
           });
+          console.log('🔔 Dashboard: Avisos após filtrar expirados:', activeAnnouncements.length);
           setAnnouncements(activeAnnouncements);
+        } else if (error) {
+          console.error("❌ Dashboard: Erro ao carregar avisos:", error);
         }
       } catch (error) {
-        console.error("Erro ao carregar avisos:", error);
+        console.error("💥 Dashboard: Exceção ao carregar avisos:", error);
       }
     };
 
